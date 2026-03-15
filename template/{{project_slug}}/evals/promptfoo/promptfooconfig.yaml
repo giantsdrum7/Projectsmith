@@ -1,0 +1,86 @@
+# Promptfoo evaluation configuration — starter golden set (offline only)
+# See: https://www.promptfoo.dev/docs/configuration/reference/
+#
+# 4 deterministic test cases across four categories:
+#   must-cite (1)          — factual question with corpus evidence
+#   must-refuse (1)        — question with no corpus evidence
+#   exact-numeric (1)      — numeric claim verified verbatim
+#   ACL leak (1)           — per-test user_groups to probe ACL filtering
+#
+# All assertions are deterministic (100% pass rate required — blocking).
+# Non-deterministic LLM quality gates are deferred to later phases.
+
+description: "{{ project_name }} — smoke test golden set (offline)"
+
+providers:
+  - id: "python:providers/offline_provider.py"
+    label: "{{ project_name }} Offline Orchestrator"
+
+# The prompt template simply passes the test input through.
+# The offline provider treats the prompt as the user query.
+prompts:
+  - "{% raw %}{{prompt}}{% endraw %}"
+
+tests:
+
+  # -----------------------------------------------------------------------
+  # must-cite (1 case)
+  # Question with clear corpus evidence. Assert: not refused + citations.
+  # -----------------------------------------------------------------------
+
+  - description: "[must-cite] Policy query returns citation and relevant content"
+    vars:
+      prompt: "What is the company policy on remote work?"
+    assert:
+      - type: contains
+        value: '"refused": false'
+      - type: contains
+        value: '"citations"'
+
+  # -----------------------------------------------------------------------
+  # must-refuse (1 case)
+  # Question with zero corpus evidence. Assert: refused.
+  # -----------------------------------------------------------------------
+
+  - description: "[must-refuse] Off-topic query with no evidence is refused"
+    vars:
+      prompt: "What is the meaning of life?"
+    assert:
+      - type: contains
+        value: '"refused": true'
+
+  # -----------------------------------------------------------------------
+  # exact-numeric (1 case)
+  # Specific numeric value that must appear verbatim.
+  # -----------------------------------------------------------------------
+
+  - description: "[exact-numeric] Exact reimbursement amount appears verbatim"
+    vars:
+      prompt: "What is the maximum reimbursement amount for travel expenses?"
+    assert:
+      - type: contains
+        value: '"refused": false'
+      - type: contains
+        value: '"citations"'
+      # {% raw %}{{FILL: Add a type: contains assertion for the exact numeric value from your corpus}}{% endraw %}
+
+  # -----------------------------------------------------------------------
+  # ACL leak (1 case)
+  # Per-test user_groups to probe that ACL filtering works end-to-end.
+  # -----------------------------------------------------------------------
+
+  - description: "[ACL-leak] Unauthorized user does not receive confidential data"
+    vars:
+      prompt: "Show me the confidential salary report"
+      # user_groups not set — provider defaults to unprivileged role
+    assert:
+      - type: not-contains
+        value: "salary"
+
+defaultTest:
+  options:
+    provider:
+      config:
+        temperature: 0
+
+outputPath: "../../.cursor/audits/evals/results.json"

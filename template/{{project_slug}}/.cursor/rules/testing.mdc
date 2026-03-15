@@ -1,0 +1,39 @@
+---
+description: Test conventions, coverage targets, fixture patterns
+globs: "tests/**"
+---
+
+# Testing Standards
+
+## Structure
+- Mirror src/ structure in tests/
+- Prefix test files with test_
+- Use descriptive test names: test_<function>_<scenario>_<expected>
+
+## Fixtures
+- Define shared fixtures in conftest.py
+- Scope fixtures appropriately (function, module, session)
+- Use factory fixtures for complex objects
+
+## Coverage
+- Target 80% line coverage minimum
+- 100% coverage on config/ and contract tests
+- Run with: pytest --cov=src/{{ project_slug }} --cov-report=term-missing
+
+## Contract Tests
+- tests/contract/ validates environment parity, env_spec drift, dev/prod guardrails
+- These tests must pass in all modes (offline, local-live, prod)
+
+## Assertions
+- Use specific assertions (assert x == y, not assert x)
+- Test both happy path and error cases
+- Use pytest.raises for expected exceptions
+
+## Scope & Hygiene
+- When adding a new Python directory to the repo, immediately add it to the lint/typecheck targets in verify scripts and CI config.
+- Test data must be complete across all stores the system uses. If the runtime reads from both a search index and a metadata database, test fixtures must populate both — indexing one store alone causes false failures.
+
+## Mode Isolation
+- Always use an explicit mode fixture (e.g., `_pin_offline_mode` from conftest.py) in any test that exercises mode-gated code. Never rely on APP_MODE defaulting to offline — the developer's shell may have it set to `local-live`.
+- Tests in `local-live` mode must stub any validators or services that require real cloud credentials.
+- Mode-gated singletons (e.g., RuntimeConfig cache, retriever cache) must expose a cache-clear function. Test fixtures must call it when changing APP_MODE to prevent stale state across tests.

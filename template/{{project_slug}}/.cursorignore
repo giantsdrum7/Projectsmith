@@ -1,0 +1,20 @@
+# Ignore audit artifacts
+.cursor/audits/
+.cursor/baseline_test_out/
+
+# Ignore generated / cache files
+__pycache__/
+.venv/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+dist/
+build/
+htmlcov/
+.pytest_cache/
+coverage.xml
+cdk.out/
+
+# Ignore environment files
+.env
+.env.local

@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# Ruff
+.ruff_cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.envrc
+
+# Cursor
+.cursor/audits/
+.cursor/last-verify-failure.txt
+.cursor/baseline_test_out/
+
+# Claude
+.claude/settings.local.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+.pytest_cache/
+
+# Logs
+*.log
+
+# CDK
+# Synthesis output can contain resolved account IDs, ARNs, and inline policy docs
+cdk.out/
+
+# Node (for future frontend modules)
+node_modules/
+
+# Generated
+mode_defaults.json
+.generated/
+
+# Runtime overrides (contain real account IDs / ARNs)
+infra/params/*-runtime-overrides.json
+
+
+.aws-profile
+.aws-region

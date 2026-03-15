@@ -1,0 +1,34 @@
+---
+description: LLM provider selection, model routing, fallback logic
+globs: "src/**/llm/**"
+---
+
+# LLM Routing Standards
+
+## Model Selection
+- Use env_spec.py to define model ARNs per mode
+- offline mode: use stub/mock LLM (no API calls)
+- local-live mode: use dev Bedrock inference profile
+- prod mode: use prod Bedrock inference profile
+
+## Fallback Logic
+- Implement retry with exponential backoff
+- Log all LLM call failures with request ID
+- Fall back to cheaper model on rate limit errors
+- Never retry on authentication errors
+
+## Cost Controls
+- Log token usage per request
+- Set max_tokens limits per use case
+- Monitor daily spend via CloudWatch metrics
+
+## Safety
+- Never log full prompts in production (may contain PII)
+- Redact sensitive fields before sending to LLM
+- Validate LLM responses before using in business logic
+
+## JSON Parsing
+- When parsing structured JSON from LLMs, always strip markdown code fences (` ```json ` / ` ```JSON ` / ` ``` `) and surrounding prose before parsing. LLMs frequently wrap JSON in fences even when instructed not to. Use a robust extraction pattern: strip fences first, then find outermost braces, then parse.
+
+## Sampling Parameters
+- For Bedrock Claude models, never send both `temperature` and `top_p` in the same request — the API rejects it. Send `temperature` only; omit `top_p`.

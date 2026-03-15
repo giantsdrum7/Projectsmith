@@ -1,0 +1,60 @@
+---
+description: Task execution workflow — verification, commit, handoff patterns
+alwaysApply: true
+---
+
+# Executor Standards
+
+## Before Starting Work
+- Read the task description completely
+- Check REPO_MAP.md for current project state
+- Run verify-fast to ensure clean baseline
+
+## During Work
+- Make small, incremental changes
+- Run verify-fast after significant changes
+- Keep commits atomic and well-described
+
+## Before Committing
+- Run scripts/verify-fast.ps1 (or .sh)
+- Ensure no secrets in staged files
+- Write clear commit message (type: description)
+
+## Before Finishing a Task
+- Run scripts/verify.ps1 (or .sh) — full verification
+- If verification fails, read .cursor/last-verify-failure.txt and fix
+- Update relevant docs if public API changed
+
+## Human-Only File Protocol
+
+If a task requires changes to a human-only file (`AGENTS.md`, `CLAUDE.md`,
+`CURSOR_RULES.md`, `pyproject.toml`, `CODEOWNERS`, `.pre-commit-config.yaml`,
+`copier.yaml`):
+
+1. **STOP** — do not attempt workarounds or alternative implementations.
+2. **Report** the exact change needed and which file it belongs in.
+3. **Wait** for the human to respond with one of:
+   - `"changes made, continue"` — human edited the file; agent resumes task.
+   - `"permission granted"` — human explicitly authorises the agent to make
+     that specific edit; agent makes the change, then resumes task.
+4. Do not proceed until a clear go-ahead is received.
+
+## Lessons Learned
+
+When a bug is fixed or a workflow improves, record a lesson in the appropriate
+`Lessons_Learned/` file:
+
+- **critical.md** — required when the fix prevents recurrence of a production-risk
+  issue, security/secrets exposure, CI bypass, data loss, or runaway cost.
+- **notable.md** — recommended for bugs that took >30 min to diagnose, surprising
+  API/tool behavior, or configuration gotchas others are likely to repeat.
+- **quality-of-life.md** — optional for workflow improvements, tooling tips, or
+  friction reductions.
+
+Use the helper: `pwsh scripts/dev/add-lesson.ps1 -Category <category> -Title "<title>"`
+
+Keep entries brief and structured. Focus on **prevention**. Never include secrets.
+
+## Handoff
+- Use .cursor/prompts/HANDOFF_TASK_PACKET.md template
+- Include: what was done, what remains, verification status, blockers

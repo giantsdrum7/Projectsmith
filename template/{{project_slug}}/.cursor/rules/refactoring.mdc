@@ -1,0 +1,26 @@
+---
+description: Safe refactoring patterns using Mikado method
+globs: "src/**"
+---
+
+# Refactoring Standards
+
+## Mikado Method (6 Phases)
+1. Define the refactoring goal
+2. Attempt the change
+3. If tests break, note the failure
+4. Trace to root cause
+5. Fix root cause first (smallest possible change)
+6. Retry the goal
+
+## Safety Rules
+- Never refactor and add features in the same commit
+- Run full verify before and after refactoring
+- Keep a refactoring log in the PR description
+- If a refactoring touches >5 files, create a plan first
+
+## Patterns
+- Extract method/class for duplicated logic
+- Replace magic numbers with named constants
+- Introduce interfaces for external dependencies
+- Use the Strangler Fig pattern for large rewrites

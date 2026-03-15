@@ -1,0 +1,55 @@
+# Security Scanning — Weekly deep secret scan
+# Tier 3: Runs weekly and on-demand
+
+name: Security Scan
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"  # Every Monday at 6 AM UTC
+  workflow_dispatch:
+
+# Read-only token for all jobs in this workflow.
+permissions:
+  contents: read
+
+jobs:
+  deep-secret-scan:
+    name: Deep Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Run trufflehog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
+
+      - name: Run gitleaks (full history)
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: "--log-opts=--all"
+        env:
+          GITHUB_TOKEN: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+          # Disable PR review comments to avoid 403 on repos with read-only
+          # default workflow token. See ci.yml secret-scan job for details.
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          GITLEAKS_LICENSE: {% raw %}${{ secrets.GITLEAKS_LICENSE }}{% endraw %}
+
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "{{ python_version }}"
+
+      - name: Install dependencies
+        run: uv sync --dev --frozen
+
+      - name: Run pip-audit
+        run: uv run pip-audit
+        continue-on-error: true  # {% raw %}{{FILL: Set to false when ready to enforce}}{% endraw %}

@@ -1,0 +1,113 @@
+# CI Pipeline — Lint, Type Check, Unit Tests, Secret Scanning
+# Tier 1: Runs on every push and pull request
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+# Minimal token scope — no write access needed for CI checks.
+# gitleaks-action PR commenting is disabled (GITLEAKS_ENABLE_COMMENTS=false
+# below) so pull-requests: write is never required.
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "{{ python_version }}"
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # setup-uv installs uv AND the requested Python version in one step.
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: {% raw %}${{ env.PYTHON_VERSION }}{% endraw %}
+
+      # --dev installs [dependency-groups].dev (ruff, mypy, pytest, pytest-cov).
+      # --frozen ensures the exact versions from the committed uv.lock are used;
+      # CI fails loudly if pyproject.toml and uv.lock are out of sync.
+      - name: Install dependencies
+        run: uv sync --dev --frozen
+
+      - name: Run ruff (lint)
+        run: >
+          uv run ruff check
+          src/ tests/
+          scripts/env/generate_env_templates.py
+
+      - name: Run ruff (format check)
+        run: >
+          uv run ruff format --check
+          src/ tests/
+          scripts/env/generate_env_templates.py
+
+      - name: Run mypy
+        run: >
+          uv run mypy
+          src/ tests/
+          scripts/env/generate_env_templates.py
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    env:
+      APP_MODE: offline
+      AWS_REGION: {{ aws_region }}
+      LOG_LEVEL: DEBUG
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: {% raw %}${{ env.PYTHON_VERSION }}{% endraw %}
+
+      - name: Install dependencies
+        run: uv sync --dev --frozen
+
+      - name: Run pytest
+        run: uv run pytest tests/ --tb=short -q --cov=src/{{ project_slug }} --cov-report=term-missing
+
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    # Dependabot PRs run in a restricted context where org secrets (including
+    # GITLEAKS_LICENSE) are not injected — this is a GitHub security boundary,
+    # not a configuration gap. Skip the scan for dependabot[bot] to unblock
+    # dependency-bump PRs. Gitleaks still runs for all human PRs and for every
+    # push to main/develop where secrets are always available.
+    if: github.actor != 'dependabot[bot]'
+    # Explicitly scoped so the job-level token cannot exceed these permissions
+    # even if workflow-level defaults change.
+    # pull-requests: read is required by gitleaks-action to enumerate PR commits
+    # even when PR commenting is disabled (GITLEAKS_ENABLE_COMMENTS=false below).
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # gitleaks needs full history to detect secrets in past commits.
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+          # Disable PR review comments — the default behaviour calls the
+          # pulls.createReviewComment API which requires pull-requests:write.
+          # Setting this to false avoids 403 errors on repos where the default
+          # workflow token is read-only.
+          # Source: https://github.com/gitleaks/gitleaks-action#environment-variables
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          # GITLEAKS_LICENSE is required for organisation-owned repos (free
+          # tier available at https://gitleaks.io). Not required for personal
+          # accounts. Add as a GitHub Secret if scanning an org repo.
+          GITLEAKS_LICENSE: {% raw %}${{ secrets.GITLEAKS_LICENSE }}{% endraw %}

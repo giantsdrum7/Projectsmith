@@ -1,0 +1,27 @@
+---
+description: React/Vite patterns, component conventions
+globs: "apps/web/**"
+---
+
+# Frontend Standards
+
+## Components
+- One component per file
+- Use functional components with hooks
+- Co-locate styles, tests, and types with components
+- Prefix shared components with project namespace
+
+## State Management
+- Use React Query for server state
+- Use Context/Zustand for client state
+- Avoid prop drilling beyond 2 levels
+
+## Performance
+- Lazy-load routes and heavy components
+- Memoize expensive computations (useMemo)
+- Use virtualization for long lists
+
+## Security
+- Sanitize all user input before rendering
+- Never store tokens in localStorage (use httpOnly cookies)
+- Validate environment variables at build time

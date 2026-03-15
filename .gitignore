@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Re-include template scripts/env/ (not a venv)
+!**/scripts/env/
+!**/scripts/env/**
+
+# Re-include template mode_defaults.json (excluded by template .gitignore)
+!template/**/mode_defaults.json
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# Copier
+.copier-answers.yml
+!template/**/{{ _copier_conf.answers_file }}
+
+# Build / cache artifacts
+*.pyc
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# OS files
+Desktop.ini
+ehthumbs.db

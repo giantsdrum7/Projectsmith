@@ -1,0 +1,118 @@
+_min_copier_version: "9.0.0"
+_subdirectory: "template"
+_answers_file: ".copier-answers.yml"
+_templates_suffix: ""
+
+_exclude:
+  - "{% if not include_frontend %}apps{% endif %}"
+  - "{% if not include_frontend %}**/frontend.mdc{% endif %}"
+  - "{% if not include_infra %}infra{% endif %}"
+  - "{% if not include_observability %}observability{% endif %}"
+  - "{% if not include_security %}security{% endif %}"
+  - "{% if not include_evals %}evals{% endif %}"
+
+project_name:
+  type: str
+  help: "Human-readable project name (e.g., 'My Knowledge Assistant')"
+
+project_slug:
+  type: str
+  help: "Python package name (snake_case, e.g., 'my_assistant')"
+  default: "{{ project_name | lower | replace(' ', '_') | replace('-', '_') }}"
+  validator: "{% if not (project_slug | regex_search('^[a-z][a-z0-9_]*$')) %}Must be a valid Python identifier (lowercase, underscores, no leading digits){% endif %}"
+
+project_description:
+  type: str
+  help: "One-line project description"
+  default: ""
+
+github_org:
+  type: str
+  help: "GitHub organization or username"
+
+github_team_slug:
+  type: str
+  help: "GitHub team slug for CODEOWNERS (e.g., 'core-team')"
+  default: "core-team"
+
+aws_region:
+  type: str
+  help: "AWS region for all resources"
+  default: "us-east-1"
+
+python_version:
+  type: str
+  help: "Minimum Python version"
+  default: "3.12"
+
+license:
+  type: str
+  help: "Project license"
+  default: "MIT"
+  choices:
+    - "MIT"
+    - "Apache-2.0"
+    - "proprietary"
+
+claude_code_model:
+  type: str
+  help: "Claude Code model ID for .claude/settings.json"
+  default: "claude-opus-4-6"
+
+metadata_store:
+  type: str
+  help: "Primary metadata store"
+  default: "none"
+  choices:
+    - "none"
+    - "dynamodb"
+    - "rds-postgres"
+
+llm_provider:
+  type: str
+  help: "LLM provider"
+  default: "none"
+  choices:
+    - "none"
+    - "bedrock"
+    - "openai"
+
+include_frontend:
+  type: bool
+  help: "Include frontend module (apps/web/, React/Vite patterns)"
+  default: false
+
+include_infra:
+  type: bool
+  help: "Include infrastructure-as-code module (infra/)"
+  default: false
+
+include_observability:
+  type: bool
+  help: "Include observability module (OpenTelemetry, dashboards)"
+  default: false
+
+include_security:
+  type: bool
+  help: "Include security module (OWASP controls, redaction config)"
+  default: false
+
+include_evals:
+  type: bool
+  help: "Include evaluation harness (promptfoo)"
+  default: true
+
+_message_after_copy: |
+  ✓ Project '{{ project_name }}' generated successfully!
+
+  Next steps:
+    1. cd {{ project_slug }}
+    2. git init && git add . && git commit -m "Initialize from Projectsmith"
+    3. uv venv
+    4. uv lock
+    5. uv sync --dev
+    6. Open in Cursor or Claude Code — governance, commands, and verification are ready
+    7. Fill all FILL placeholders with project-specific content
+    8. Run verify-fast to confirm the scaffold is healthy
+
+  See START_HERE.md for detailed onboarding.

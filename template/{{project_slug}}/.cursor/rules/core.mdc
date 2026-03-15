@@ -1,0 +1,38 @@
+---
+description: Universal coding standards — naming, error handling, imports, documentation
+alwaysApply: true
+---
+
+# Core Coding Standards
+
+## Naming
+- Use snake_case for functions, variables, modules
+- Use PascalCase for classes
+- Use UPPER_SNAKE_CASE for constants
+- Prefix private attributes with underscore
+
+## Error Handling
+- Never catch bare exceptions (`except:`)
+- Always log exceptions with context before re-raising
+- Use custom exception classes for domain errors
+- Return explicit error types, not None for failures
+
+## Imports
+- Standard library first, then third-party, then local
+- Use absolute imports
+- No wildcard imports (`from x import *`)
+
+## Documentation
+- All public functions require docstrings (Google style)
+- Module-level docstrings for non-trivial modules
+- Type hints on all function signatures
+
+## Security
+- Never hardcode secrets, tokens, or credentials
+- Use environment variables or Secrets Manager
+- Validate all external input
+
+## File Organization
+- One class per file for large classes
+- Group related utilities in a single module
+- Keep files under 300 lines where practical

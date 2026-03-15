@@ -1,0 +1,79 @@
+# Evaluations Pipeline — Run promptfoo on prompt/config changes
+# Tier 2: Runs when prompt or config files change
+
+name: Evaluations
+
+on:
+  push:
+    paths:
+      - "evals/**"
+      - "src/**/llm/**"
+      - "src/**/config/**"
+    branches: [main, develop]
+  pull_request:
+    paths:
+      - "evals/**"
+      - "src/**/llm/**"
+      - "src/**/config/**"
+
+jobs:
+  evaluate:
+    name: Run Promptfoo Evaluations
+    runs-on: ubuntu-latest
+    env:
+      APP_MODE: offline
+      AWS_REGION: {{ aws_region }}
+      # {% raw %}{{FILL: Set these secrets in GitHub Settings > Secrets > Actions}}{% endraw %}
+      # BEDROCK_INFERENCE_PROFILE_ARN: {% raw %}${{ secrets.BEDROCK_INFERENCE_PROFILE_ARN }}{% endraw %}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      # Install Python + uv so promptfoo's Python worker can import pydantic
+      # and the project package.  uv creates .venv/ at $GITHUB_WORKSPACE/.venv.
+      - name: Setup Python via uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "{{ python_version }}"
+
+      - name: Install Python dependencies
+        run: uv sync --dev --frozen
+
+      - name: Install promptfoo
+        run: npm install -g promptfoo
+
+      - name: Create output directory
+        run: mkdir -p .cursor/audits/evals
+
+      - name: Run evaluations
+        # PROMPTFOO_PYTHON tells promptfoo's Python worker to use the venv
+        # interpreter that has pydantic, pydantic-settings, and the project package installed.
+        # Exits non-zero if any assertion fails — no continue-on-error; this
+        # job blocks PR merge on any deterministic gate failure.
+        env:
+          PROMPTFOO_PYTHON: {% raw %}${{ github.workspace }}{% endraw %}/.venv/bin/python
+        run: promptfoo eval --config evals/promptfoo/promptfooconfig.yaml --output .cursor/audits/evals/results.json
+
+      - name: Assert 100% eval pass rate
+        # Belt-and-suspenders: promptfoo exit code already blocks on failure.
+        # This step provides an explicit failure message with the failure count.
+        # Thresholds: must-cite 100%, must-refuse 100%, exact-numeric/legal 100%,
+        # ACL leak 100%. LLM quality gates are non-blocking and deferred to Phase 3.
+        run: |
+          FAILURES=$(jq '.results.stats.failures // 0' .cursor/audits/evals/results.json)
+          echo "Eval failures: $FAILURES"
+          if [ "$FAILURES" -ne 0 ]; then
+            echo "::error::$FAILURES deterministic eval(s) failed — all gates require 100% pass rate"
+            exit 1
+          fi
+
+      - name: Upload results
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: eval-results
+          path: .cursor/audits/evals/

@@ -1,0 +1,1 @@
+{"_deprecated": true, "_note": "Superseded by offline_corpus.jsonl. All eval cases now live in promptfooconfig.yaml against the full offline corpus."}

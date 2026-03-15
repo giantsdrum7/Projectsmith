@@ -1,0 +1,259 @@
+# Template Validation — Generate and verify all three presets
+# Runs on Projectsmith itself (root workflow, not part of generated projects)
+
+name: Validate Template
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "template/**"
+      - "copier.yaml"
+      - "scripts/dev/validate-template.ps1"
+      - ".github/workflows/validate-template.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "template/**"
+      - "copier.yaml"
+      - "scripts/dev/validate-template.ps1"
+      - ".github/workflows/validate-template.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate ${{ matrix.preset }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        preset: [minimal, ai-core, full-stack]
+        include:
+          - preset: minimal
+            answers: |
+              project_name=TestMinimal
+              project_slug=test_minimal
+              project_description=Minimal preset validation
+              github_org=test-org
+              github_team_slug=core-team
+              aws_region=us-east-1
+              python_version=3.12
+              license=MIT
+              claude_code_model=claude-opus-4-6
+              metadata_store=none
+              llm_provider=none
+              include_frontend=false
+              include_infra=false
+              include_observability=false
+              include_security=false
+              include_evals=false
+            expected_present: ""
+            expected_absent: "evals apps infra observability security .cursor/rules/frontend.mdc"
+          - preset: ai-core
+            answers: |
+              project_name=TestAiCore
+              project_slug=test_ai_core
+              project_description=AI-core preset validation
+              github_org=test-org
+              github_team_slug=core-team
+              aws_region=us-east-1
+              python_version=3.12
+              license=MIT
+              claude_code_model=claude-opus-4-6
+              metadata_store=dynamodb
+              llm_provider=bedrock
+              include_frontend=false
+              include_infra=false
+              include_observability=false
+              include_security=false
+              include_evals=true
+            expected_present: "evals"
+            expected_absent: "apps infra observability security .cursor/rules/frontend.mdc"
+          - preset: full-stack
+            answers: |
+              project_name=TestFullStack
+              project_slug=test_full_stack
+              project_description=Full-stack preset validation
+              github_org=test-org
+              github_team_slug=core-team
+              aws_region=us-east-1
+              python_version=3.12
+              license=MIT
+              claude_code_model=claude-opus-4-6
+              metadata_store=dynamodb
+              llm_provider=bedrock
+              include_frontend=true
+              include_infra=true
+              include_observability=true
+              include_security=true
+              include_evals=true
+            expected_present: "evals apps infra observability security .cursor/rules/frontend.mdc"
+            expected_absent: ""
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install Copier
+        run: uv tool install copier
+
+      - name: Generate project (${{ matrix.preset }})
+        run: |
+          OUTPUT_DIR="${{ runner.temp }}/generated-${{ matrix.preset }}"
+          mkdir -p "$OUTPUT_DIR"
+
+          DATA_ARGS=()
+          while IFS= read -r pair; do
+            [[ -z "$pair" ]] && continue
+            DATA_ARGS+=(--data "$pair")
+          done <<< "${{ matrix.answers }}"
+
+          copier copy . "$OUTPUT_DIR" --defaults "${DATA_ARGS[@]}" --vcs-ref HEAD
+
+          # Find the generated project directory (first child dir)
+          PROJECT_DIR=$(find "$OUTPUT_DIR" -mindepth 1 -maxdepth 1 -type d | head -1)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "::error::No project directory found in $OUTPUT_DIR"
+            ls -la "$OUTPUT_DIR"
+            exit 1
+          fi
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "OUTPUT_DIR=$OUTPUT_DIR" >> "$GITHUB_ENV"
+          echo "Generated project at: $PROJECT_DIR"
+          ls -la "$PROJECT_DIR"
+
+      - name: Verify governance files
+        run: |
+          REQUIRED="AGENTS.md CLAUDE.md CURSOR_RULES.md START_HERE.md README.md pyproject.toml .gitignore CODEOWNERS LICENSE"
+          MISSING=""
+          for f in $REQUIRED; do
+            if [ ! -e "$PROJECT_DIR/$f" ]; then
+              MISSING="$MISSING $f"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error::Missing governance files:$MISSING"
+            exit 1
+          fi
+          echo "All governance files present."
+
+      - name: Verify variable resolution
+        run: |
+          FAILURES=0
+
+          if grep -rn '{{ *project_name *}}' "$PROJECT_DIR" --include='*.py' --include='*.md' --include='*.toml' --include='*.yml' --include='*.yaml' --include='*.json' 2>/dev/null | grep -v 'FILL' | grep -v '.copier-answers'; then
+            echo "::error::Unresolved project_name variable found"
+            FAILURES=$((FAILURES + 1))
+          fi
+
+          if grep -rn '{{ *project_slug *}}' "$PROJECT_DIR" --include='*.py' --include='*.md' --include='*.toml' --include='*.yml' --include='*.yaml' --include='*.json' 2>/dev/null | grep -v 'FILL' | grep -v '.copier-answers'; then
+            echo "::error::Unresolved project_slug variable found"
+            FAILURES=$((FAILURES + 1))
+          fi
+
+          if grep -rn '{{ *github_org *}}' "$PROJECT_DIR" --include='*.py' --include='*.md' --include='*.toml' --include='*.yml' --include='*.yaml' --include='*.json' 2>/dev/null | grep -v 'FILL' | grep -v '.copier-answers'; then
+            echo "::error::Unresolved github_org variable found"
+            FAILURES=$((FAILURES + 1))
+          fi
+
+          if grep -rn '{{ *aws_region *}}' "$PROJECT_DIR" --include='*.py' --include='*.md' --include='*.toml' --include='*.yml' --include='*.yaml' --include='*.json' 2>/dev/null | grep -v 'FILL' | grep -v '.copier-answers'; then
+            echo "::error::Unresolved aws_region variable found"
+            FAILURES=$((FAILURES + 1))
+          fi
+
+          if [ "$FAILURES" -gt 0 ]; then
+            exit 1
+          fi
+          echo "All Copier variables resolved correctly."
+
+      - name: Verify FILL placeholders survived
+        run: |
+          FILL_COUNT=$(grep -rn 'FILL:' "$PROJECT_DIR" --include='*.py' --include='*.md' --include='*.toml' --include='*.yml' --include='*.yaml' | wc -l)
+          if [ "$FILL_COUNT" -eq 0 ]; then
+            echo "::warning::No FILL placeholders found — expected some to survive for human editing"
+          else
+            echo "Found $FILL_COUNT FILL placeholder(s) — correct."
+          fi
+
+      - name: Verify conditional modules
+        run: |
+          FAILURES=0
+
+          for item in ${{ matrix.expected_present }}; do
+            if [ ! -e "$PROJECT_DIR/$item" ]; then
+              echo "::error::Expected present: $item (not found)"
+              FAILURES=$((FAILURES + 1))
+            else
+              echo "Present (expected): $item"
+            fi
+          done
+
+          for item in ${{ matrix.expected_absent }}; do
+            if [ -e "$PROJECT_DIR/$item" ]; then
+              echo "::error::Expected absent: $item (found)"
+              FAILURES=$((FAILURES + 1))
+            else
+              echo "Absent (expected): $item"
+            fi
+          done
+
+          if [ "$FAILURES" -gt 0 ]; then
+            exit 1
+          fi
+          echo "Conditional module checks passed."
+
+      - name: Verify .copier-answers.yml
+        run: |
+          if [ ! -f "$OUTPUT_DIR/.copier-answers.yml" ]; then
+            echo "::error::.copier-answers.yml not found at output root"
+            exit 1
+          fi
+          echo ".copier-answers.yml present at output root."
+          head -20 "$OUTPUT_DIR/.copier-answers.yml"
+
+      - name: Verify LICENSE content
+        run: |
+          if ! grep -q "MIT License" "$PROJECT_DIR/LICENSE"; then
+            echo "::error::LICENSE does not contain expected MIT License text"
+            exit 1
+          fi
+          echo "LICENSE contains MIT License text."
+
+      - name: Verify .claude/settings.json model
+        run: |
+          MODEL=$(python3 -c "import json; print(json.load(open('$PROJECT_DIR/.claude/settings.json'))['model'])")
+          if [ "$MODEL" != "claude-opus-4-6" ]; then
+            echo "::error::Expected model 'claude-opus-4-6', got '$MODEL'"
+            exit 1
+          fi
+          echo "Model resolved correctly: $MODEL"
+
+      - name: Setup Python environment
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          uv venv
+          uv lock
+          uv sync --dev
+
+      - name: Run ruff check
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: uv run ruff check src/ tests/
+
+      - name: Run ruff format check
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: uv run ruff format --check src/ tests/
+
+      - name: Run mypy
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: uv run mypy src/ tests/
+
+      - name: Run pytest
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: uv run pytest tests/ -v

@@ -1,0 +1,29 @@
+---
+description: API patterns, Lambda/ECS conventions, request handling
+globs: "src/**/api/**"
+---
+
+# Backend Standards
+
+## API Design
+- Use RESTful conventions for CRUD endpoints
+- Return consistent error response format: {"error": str, "code": str, "detail": any}
+- Include request_id in all responses for tracing
+- Validate all input with Pydantic models
+
+## Lambda Patterns
+- Keep handler functions thin — delegate to service layer
+- Use structured logging (JSON format)
+- Read config from Secrets Manager via pointer pattern
+- Cold start budget: <2s for API handlers
+
+## Error Handling
+- Map domain exceptions to HTTP status codes
+- Never expose internal error details to clients
+- Log full stack traces server-side
+- Return 5xx for unexpected errors, 4xx for client errors
+
+## Authentication
+- Validate JWT tokens from Cognito (when enabled)
+- Use middleware for auth, not per-handler logic
+- Never trust client-provided user IDs — extract from token
