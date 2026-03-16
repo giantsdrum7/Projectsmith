@@ -78,9 +78,9 @@ If verification passes (`VERIFY: PASS`), your environment is ready.
 
 ## Next Steps
 
-See **continue.md** for:
-- AWS credentials and Bedrock configuration
-- Secrets Manager and pointer config pattern
-- GitHub repository and branch protection setup
-- CI/CD workflow activation
-- New teammate onboarding checklist
+Next, use the emitted project assets to finish setup:
+- `docs/reference/ENV_VARS.md` — fill environment-variable placeholders and secret ownership notes
+- `docs/ops/BRANCH_PROTECTION.md` — record branch protection and required checks
+- `docs/architecture/ARCHITECTURE.md` — capture project-specific architecture decisions
+- `AGENTS.md`, `CLAUDE.md`, and `CURSOR_RULES.md` — review governance, commands, skills, rules, and hooks
+- `scripts/env/use-env.ps1` / `scripts/env/use-env.sh` plus `scripts/verify-fast.ps1` — enter `offline` mode and verify the local setup

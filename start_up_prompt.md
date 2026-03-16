@@ -1,10 +1,10 @@
 start_up_prompt.md — Scaffold Initialization Prompt (Cursor/Claude)
 
-Copy/paste the text below into Cursor Agent or Claude Code. It directs the agent to read start_up_guide.md and build the full scaffold in phases, stopping at checkpoints to ask the human lead before continuing.
+Copy/paste the text below into Cursor Agent or Claude Code after generating a new project from the Projectsmith Copier template. It directs the agent to read start_up_guide.md and complete post-generation initialization in phases, stopping at checkpoints to ask the human lead before continuing.
 
 To Agent:
 
-You are initializing a brand‑new repository with our full AI Project Scaffold (AWS + Bedrock + GitHub).
+You are initializing a newly generated repository from the Projectsmith Copier template (AWS + Bedrock + GitHub).
 
 Rules
 
@@ -12,7 +12,7 @@ Read start_up_guide.md in the repository root and follow it exactly.
 
 No secrets (keys, tokens, credentials) may appear in any file. Use placeholders like REDACTED_ORG_SPECIFIC or {{TEMPLATE_VAR}} whenever a value is unknown or sensitive.
 
-Do not run destructive git commands (no rebase/reset --hard). You may create files and directories, add them to git, and commit locally. Do not push to remote.
+Do not run destructive git commands (no rebase/reset --hard). You may update emitted files, create any missing scaffold assets if generation drift is discovered, add changes to git, and commit locally. Do not push to remote.
 
 If any step is ambiguous, STOP and ask the human lead for clarification.
 
@@ -22,27 +22,33 @@ If the lesson is critical or recurring, also update the appropriate living doc s
 
 Task
 
-Build the full scaffold (not MVP) described in start_up_guide.md using the Phased Initialization Plan below.
+Finalize the emitted full scaffold (not MVP) described in start_up_guide.md using the Phased Initialization Plan below.
+
+Assume Copier already emitted the baseline scaffold from `template/{{project_slug}}/`. Do not re-create files or directories that are already present. Instead, verify the emitted structure, fill project-specific placeholders, and repair any generation drift you find. The emitted scaffold already includes the current governance baseline: Planner-Critic-Executor governance, the Skills vs Commands vs Rules framework, the Tier A/B/C command model, six Claude skills, and four non-destructive Claude hooks.
 
 Phase 1: Structure & Governance Skeleton
 
-Create all folders and files specified in the "Full Scaffold Directory Tree" section of start_up_guide.md. If you intentionally omit optional modules (apps/, infra/, observability/, security/), make a note in your summary.
+Confirm that the folders and files specified in the "Full Scaffold Directory Tree" section of start_up_guide.md are present in the generated repository. If something expected is missing, create only the missing item and note it in your summary. If you intentionally omit optional modules (apps/, infra/, observability/, security/), make a note in your summary.
 
 Populate governance documents with starter content:
 
-AGENTS.md — Portable rules; non‑negotiables; allowed/forbidden operations; human‑only files; verification gates; 3‑mode summary; living docs maintenance. This serves as the cross‑tool instruction standard (compatible with Cursor, Codex, Gemini CLI, GitHub Copilot, and others under the Linux Foundation AAIF).
+AGENTS.md — Structure as Part 1 (Universal Governance) and Part 2 (Project-Specific Context). Part 1 covers non-negotiables, verification gates, allowed/forbidden operations, human-only file protocol, daily workflow, proof bundles, lessons learned, script interface, task handoff roles, generated artifact lifecycle, shared canonical asset conventions, and archive convention. Part 2 uses {{FILL}} placeholders for project identity, architecture, infrastructure, mode contract specifics, repo-specific conventions, and team collaboration model. This file serves as the cross‑tool instruction standard (compatible with Cursor, Codex, Gemini CLI, GitHub Copilot, and others under the Linux Foundation AAIF).
 
 CLAUDE.md — Claude‑specific: commands (review, status, verify, repo‑map, eod, change‑summary), agent definitions, hook configuration, safety restrictions. Include a pointer to AGENTS.md for portable rules (e.g., "See @AGENTS.md for universal project instructions"). Keep under 150 lines — context budget is real.
 
 CURSOR_RULES.md — Thin adapter/index pointing to .cursor/rules/*.mdc modules and summarizing their scopes (core/testing/executor/refactoring/llm‑routing/backend/frontend). Note: use only flat .mdc files; the RULE.md folder format has known reliability issues.
 
-.cursor/rules/*.mdc — Copy the baseline rules from the template (core, testing, executor, refactoring). Include optional rule files (llm‑routing, backend, frontend) if appropriate for your organization. Each file uses YAML frontmatter with description, globs, and alwaysApply fields. Important: do not set both alwaysApply: true and globs: on the same rule (alwaysApply silently overrides globs).
+.cursor/rules/*.mdc — Confirm the emitted baseline rules from the template (core, testing, executor, refactoring). Include optional rule files (llm‑routing, backend, frontend) if appropriate for your organization. Each file uses YAML frontmatter with description, globs, and alwaysApply fields. Important: do not set both alwaysApply: true and globs: on the same rule (alwaysApply silently overrides globs). Rules targeting features not present at scaffold time (e.g., frontend.mdc targeting empty apps/web/, backend.mdc targeting empty src/**/api/) should include a `# FUTURE — This rule activates when [condition]. Not yet applicable.` banner after the frontmatter.
 
-.cursor/roles/* — Create role definitions (Implementer, Reviewer, Refactorer, Researcher, Architect) and handoff checklist and note template.
+.agent-config/README.md — Confirm that it documents the canonical-asset-vs-tool-native principle and the "reference, never duplicate" convention. This is universal content applicable to any project.
 
-.cursor/prompts/* — Create templates: handoff task packet, refactor task packet, PR summary, bug fix, add env var, incident debug, LLM routing debug.
+.agent-config/checklists/code-review.md — Confirm that the single canonical review checklist (~28 items across 6 categories: Security, Tests, Code Quality, Documentation, Architecture, Commit Hygiene) is present. Tool-specific files reference this instead of maintaining separate copies.
 
-.cursor/commands/* — Create Cursor command wrappers that mirror the Claude Code workflow commands. Each wrapper invokes the corresponding scripts/dev/ script and presents results:
+.cursor/roles/* — Confirm the emitted role definitions (Implementer, Reviewer, Refactorer, Researcher, Architect) and the handoff checklist (redirect to canonical) and note template.
+
+.cursor/prompts/* — Confirm the emitted templates: handoff task packet, refactor task packet, PR summary, bug fix, add env var, incident debug, LLM routing debug.
+
+.cursor/commands/* — Confirm the emitted Cursor command wrappers that mirror the Claude Code workflow commands. Each wrapper invokes the corresponding scripts/dev/ script and presents results:
   repo‑map.md — invokes scripts/dev/repo‑map.ps1
   verify.md — invokes scripts/verify.ps1 or scripts/verify-fast.ps1
   eod.md — full end‑of‑day sequence: invokes eod‑file‑triage.ps1 (Step 1), doc‑sync.ps1 (Step 2), conditional doc/lesson updates (Step 3), and verify (Step 4)
@@ -61,22 +67,20 @@ CURSOR_RULES.md — Thin adapter/index pointing to .cursor/rules/*.mdc modules a
   - env block: `"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"` enables agent teams (TeammateIdle hook event available).
   - See `.claude/hooks/` for the wrapper script pattern.
 
-.claude/agents/ — Copy baseline agent definitions (code‑reviewer, researcher, architect, test‑runner, implementer, refactorer). Each agent file uses YAML frontmatter (name, description, tools, model) and specifies the agent's role, invocation trigger, and checklist.
+.claude/agents/ — Confirm the emitted baseline agent definitions (code‑reviewer, researcher, architect, test‑runner, implementer, refactorer). Each agent file uses YAML frontmatter (name, description, tools, model) and specifies the agent's role, invocation trigger, and checklist.
 
-.claude/commands/ — Create slash command handlers. These are the primary interface for workflow automation:
+.claude/commands/ — Confirm the emitted slash command handlers. These are the primary interface for workflow automation:
   review.md — diff checks on staged changes
   status.md — repository status summary
   verify.md — run staged verification (invokes scripts/verify.ps1)
   repo‑map.md — update Repo_Map.md (invokes scripts/dev/repo‑map.ps1)
   eod.md — full end‑of‑day sequence: file triage, doc drift check, conditional doc/lesson updates, verify
   change‑summary.md — generate commit/PR summary from git diff
-  init.md — (optional) scaffold bootstrap command
-
 Commands use $ARGUMENTS for parameters and !`backtick` syntax for preprocessing context. Include allowed-tools in YAML frontmatter. For quality gates like /verify, use explicit invocation (do not rely on skill auto‑invocation).
 
-.claude/skills/repo‑map/SKILL.md — Create a skill definition for the repo map generator. Use disable‑model‑invocation: true (manual invocation only) for safety. Include allowed‑tools and argument‑hint in YAML frontmatter. Optionally include a scripts/generate.sh helper.
+.claude/skills/repo‑map/SKILL.md — Confirm the emitted skill definition for the repo map generator. Use disable‑model‑invocation: true (manual invocation only) for safety. Include allowed‑tools and argument‑hint in YAML frontmatter. Optionally include a scripts/generate.sh helper.
 
-Seed living docs with headings and placeholders:
+Confirm living docs have the expected headings and placeholders:
 
 REPO_MAP.md — Create headings with AUTO/HUMAN markers. AUTO sections use <!-- AUTO:START:section_name --> and <!-- AUTO:END:section_name --> delimiters and contain {{FILL: description}} placeholders. HUMAN sections are hand‑maintained and agents must not overwrite them. Include these headings:
   Purpose & invariants (HUMAN)
@@ -98,17 +102,17 @@ docs/ops/BRANCH_PROTECTION.md — Add recommended sections: Protected branches, 
 
 docs/refactoring/README.md — Add a short description of the 6‑phase Mikado refactoring method.
 
-Create hygiene and config files:
+Confirm hygiene and config files are present and correct:
 
 .gitignore (include: .cursor/audits/, .cursor/last‑verify‑failure.txt, .copier‑answers.yml, .claude/settings.local.json, __pycache__/, .venv/, .mypy_cache/, .env), .cursorignore, .pre‑commit‑config.yaml (include secret scanning hooks), CODEOWNERS, .github/pull_request_template.md, .github/dependabot.yml.
 
-Add pyproject.toml (skeleton). Do NOT create uv.lock — it is generated by the human after all three phases are complete by running: uv venv, then uv lock, then uv sync.
+Confirm `pyproject.toml` (skeleton) is present. Do NOT create `uv.lock` — it is generated by the human after all three phases are complete by running: `uv venv`, then `uv lock`, then `uv sync`.
 
 Stop after Phase 1 and ask: "Phase 1 complete. Ready for Phase 2?" Do not begin Phase 2 until the human agrees.
 
 Phase 2: Environment & Modes + CI Tiers + Eval Harness + Workflow Scripts
 
-Create src/{{project_slug}}/config/env_spec.py with skeleton environment variable definitions (~60 variables). Define categories (mode, AWS, database, S3, logging, timeouts, features) and include placeholder values. Do not include real secrets. The database category should reflect the project's chosen metadata store (e.g., DynamoDB). Do not add Supabase variables unless the project explicitly uses Supabase.
+Confirm `src/{{project_slug}}/config/env_spec.py` contains skeleton environment variable definitions (~60 variables). Define categories (mode, AWS, database, S3, logging, timeouts, features) and include placeholder values. Do not include real secrets. The database category should reflect the project's chosen metadata store (e.g., DynamoDB). Do not add Supabase variables unless the project explicitly uses Supabase.
 
 Coding requirements for env_spec.py (enforced by ruff):
 - Use enum.StrEnum for string enums: class Category(enum.StrEnum) and class Mode(enum.StrEnum). Do NOT write class X(str, enum.Enum) — ruff UP042 flags this.
@@ -119,13 +123,13 @@ Coding requirements for env_spec.py (enforced by ruff):
       Mode.PROD: "value-c",
   },
 
-Create scripts/env/use‑env.ps1 (authoritative) and scripts/env/use‑env.sh. Implement offline/local‑live/prod modes; include placeholder bucket names, secret prefixes and region (us‑east‑1). Include safety checks (prod mode requires explicit flag; region lock). Create scripts/env/generate_env_templates.py with a stub that will generate mode_defaults.json and .env.example from env_spec.py.
+Confirm `scripts/env/use‑env.ps1` (authoritative) and `scripts/env/use‑env.sh` are present and implement offline/local‑live/prod modes; include placeholder bucket names, secret prefixes and region (us‑east‑1). Include safety checks (prod mode requires explicit flag; region lock). Confirm `scripts/env/generate_env_templates.py` contains a stub that will generate `mode_defaults.json` and `.env.example` from `env_spec.py`.
 
 Populate verification scripts:
 
 scripts/verify.ps1, verify-fast.ps1 (Windows) and scripts/verify.sh, verify-fast.sh (Unix) with ruff check + ruff format --check + mypy + pytest commands. Use uv for Python execution. Write failures to .cursor/last-verify-failure.txt.
 
-Create workflow automation scripts (scripts-first pattern). Each script supports --dry-run (default), --apply, --out <dir>, and --format json|text:
+Confirm the workflow automation scripts (scripts-first pattern). Each script supports --dry-run (default), --apply, --out <dir>, and --format json|text:
 
 scripts/dev/repo‑map.ps1 — Generates/updates Repo_Map.md. Runs tree (excluding __pycache__, .git, node_modules, .venv, .mypy_cache), extracts entry points from pyproject.toml [project.scripts], captures recent git activity (git log --oneline -20, git diff --stat HEAD~5..HEAD). Updates only content inside <!-- AUTO:START --> / <!-- AUTO:END --> markers; never overwrites HUMAN sections. Writes proof bundle to .cursor/audits/repo-map/.
 
@@ -135,7 +139,7 @@ scripts/dev/doc‑sync.ps1 — End-of-day doc drift check. Gets today's changed 
 
 scripts/dev/README.md — Describes the workflow scripts, their standard interface, the proof bundle convention, and the daily workflow (start of day → during day → before push → end of day).
 
-Add evaluation harness:
+Confirm the evaluation harness is present:
 
 evals/promptfoo/promptfooconfig.yaml — Minimal config with stub provider and simple assertions.
 
@@ -143,7 +147,7 @@ evals/datasets/smoke.jsonl — Minimal dataset sample.
 
 evals/rubrics/default.md — Basic rubric description.
 
-Add GitHub workflows:
+Confirm the GitHub workflows are present:
 
 .github/workflows/ci.yml — Lint (ruff check + ruff format --check), type check, unit tests, secret scanning on every push/PR. Use placeholder secret names matching the project's actual services (e.g., BEDROCK_INFERENCE_PROFILE_ARN, DATABASE_SECRET_ARN). Do not scaffold Supabase secret names unless the project specifically uses Supabase.
 
@@ -163,13 +167,13 @@ CI correctness checklist (verify before finishing Phase 2):
 - [ ] gitleaks checkout uses fetch-depth: 0.
 - [ ] CI passes on first PR without AWS credentials (all LLM calls skipped in offline mode).
 
-Optionally create preflight_check.py (recommended) to check environment variables, region lock, and tool contracts at runtime.
+Optionally add `preflight_check.py` (recommended) if the generated project needs it to check environment variables, region lock, and tool contracts at runtime.
 
 Stop after Phase 2 and ask: "Phase 2 complete. Ready for Phase 3?" Do not begin Phase 3 until the human agrees.
 
 Phase 3: Full Modules + Runbooks + Optional Infrastructure
 
-If requested, create skeleton directories for optional modules: apps/, infra/, observability/, security/. Include README.md explaining when and how to use each module.
+If requested, add any missing skeleton directories for optional modules: apps/, infra/, observability/, security/. Include README.md explaining when and how to use each module.
 
 Populate scripts/deploy/ with stub scripts:
 
@@ -181,7 +185,7 @@ post_deploy_verification.ps1 — Placeholder script to perform smoke tests after
 
 README.md — Describe how to use these deploy scripts.
 
-Create runbooks:
+Confirm the runbooks are present:
 
 docs/ops/RUNBOOK_DEPLOY.md — Step‑by‑step instructions for deployments.
 
@@ -189,7 +193,7 @@ docs/ops/RUNBOOK_INCIDENTS.md — Triage guidelines for incidents (check logs, i
 
 Finish Phase 3. Provide:
 
-A short "What I created" summary.
+A short "What I validated or updated" summary.
 
 Any exceptions (missing modules, differences from the scaffold).
 

@@ -23,7 +23,7 @@ when a fix prevents recurrence of a high-severity problem.
 **Fix:** What was changed to resolve it.
 **Prevention:** What to do next time to avoid this entirely.
 **Links:** (optional) PR number, issue, commit SHA, or file path.
-**Promoted to:** `—` until promoted, then e.g. `start_up_prompt.md §Phase 2 CI checklist` — brief description (YYYY-MM-DD)
+**Promoted to:** `—` until promoted, then e.g. `docs/reference/ENV_VARS.md` — brief description (YYYY-MM-DD)
 
 ---
 
@@ -34,21 +34,16 @@ when a fix prevents recurrence of a high-severity problem.
 
 ## Entries
 
-### 2026-01-15 — Gitleaks 403 on Org Repo PRs
+### YYYY-MM-DD — Example: verify gate caught a risky production-facing change
 
-**Symptom:** CI `secret-scan` job failed with HTTP 403 on every pull request in an
-organization-owned repository. The `gitleaks-action` step exited non-zero, blocking
-merges.
-**Root cause:** `gitleaks-action` v2 defaults to posting PR review comments, which
-requires `pull-requests: write`. The workflow only granted `contents: read` at the
-workflow level, causing a 403 from the GitHub API on comment creation.
-**Fix:** Added `GITLEAKS_ENABLE_COMMENTS: "false"` to the gitleaks step env block, and
-added `pull-requests: read` to the job-level permissions block. The action still needs
-`pull-requests: read` to enumerate PR commits even when commenting is disabled.
-**Prevention:** When adding gitleaks to any new workflow always set
-`GITLEAKS_ENABLE_COMMENTS: "false"` and add `pull-requests: read` to job permissions.
-Never assume the default workflow token has write permissions on org repos.
-**Links:** `.github/workflows/ci.yml`, `.github/workflows/security.yml`
-**Promoted to:** —
+**Symptom:** A full verification run failed before release because a high-impact change
+did not meet the required safety or regression checks.
+**Root cause:** The change was larger than expected and one critical guardrail was not
+re-checked before handoff.
+**Fix:** Updated the affected code or configuration, re-ran the required verification
+steps, and documented the missing guardrail in the project docs.
+**Prevention:** Treat every production-facing or security-sensitive change as a full
+verify candidate, even when the edit looks small at first.
+**Links:** `scripts/verify.ps1`, `scripts/verify.sh`
 
-<!-- Add project-specific lessons below. See continue.md §6.6 for the full workflow. -->
+<!-- Replace the example above with real project-specific lessons as they occur. -->

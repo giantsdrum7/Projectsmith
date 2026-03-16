@@ -40,7 +40,6 @@ $ProtectedFiles = @(
     "START_HERE.md", "REPO_MAP.md",
     "pyproject.toml", "uv.lock",
     ".gitignore", ".cursorignore", ".pre-commit-config.yaml", "CODEOWNERS",
-    "start_up_guide.md", "start_up_prompt.md", "continue.md",
     ".env.example", ".env.local.example"
 )
 

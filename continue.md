@@ -1,6 +1,6 @@
 continue.md — How to Begin (Credentials, Cloud Setup, Env, Tools)
 
-This guide is used after the scaffold exists (created via start_up_guide.md and start_up_prompt.md). It explains how to connect your repository to GitHub and AWS, configure environment variables and secrets, and leverage the built‑in agent tooling. The scaffolding is AWS‑first and Python‑centric but leaves room for other clouds or languages by adjusting parameters later.
+This repo-root guide describes how to work with a project after it has been generated from the Projectsmith Copier template. The authoritative emitted scaffold source lives under `template/{{project_slug}}/` in the template repo; generated projects do not receive this file, so day-to-day project work should rely on emitted assets such as `START_HERE.md`, `AGENTS.md`, `CLAUDE.md`, `CURSOR_RULES.md`, and the shipped docs/scripts. The scaffolding is AWS-first and Python-centric but leaves room for other clouds or languages by adjusting parameters later.
 
 1) GitHub Setup
 1.1 Create & Connect Repository
@@ -204,6 +204,8 @@ Fill in the appropriate names (repository, functions, buckets) and secrets. Cons
 
 The scaffold follows a scripts‑first architecture for all workflow automation. Deterministic PowerShell scripts in scripts/dev/ are the single source of truth for each workflow action. Claude Code commands (.claude/commands/*.md) and Cursor commands (.cursor/commands/*.md) are thin wrappers that invoke these scripts and format their output.
 
+The current emitted governance model pairs that scripts-first approach with Planner-Critic-Executor collaboration, the Skills vs Commands vs Rules split, an explicit Tier A/B/C command model, six Claude skills, and four non-destructive Claude hooks. Keep this doc aligned with those emitted assets rather than describing a separate manual bootstrap flow.
+
 This means the workflow is testable in CI, runnable from any terminal, version‑controlled, and debuggable. If Claude Code or Cursor change their APIs, only the thin wrappers need updating — the scripts remain stable.
 
 All workflow scripts support a standard interface:
@@ -236,7 +238,11 @@ Keep rules minimal and convention‑focused; do not embed workflow logic in rule
 /status — repository status summary
 /change-summary — generate commit/PR summary from git diff
 
-.cursor/roles/ defines agent roles (Implementer, Reviewer, Refactorer, Researcher, Architect). These roles should be used in multi‑agent workflows and referenced in task packet templates.
+.cursor/roles/ defines agent roles (Implementer, Reviewer, Refactorer, Researcher, Architect). These roles should be used in multi‑agent workflows and referenced in task packet templates. The REVIEW_CHECKLIST.md file redirects to the canonical checklist at `.agent-config/checklists/code-review.md`.
+
+.agent-config/ holds shared canonical assets (checklists, reference docs) used by all IDE tools. See `.agent-config/README.md` for the convention. Tool-specific files reference these assets instead of duplicating content.
+
+.cursor/archive/ stores historical artifacts (outdated reports, superseded generated docs). Agents must not trust archived files as current state.
 
 .cursor/prompts/ stores task packet templates, making it easy to hand off tasks to agents. Use these templates to maintain consistency across handoffs.
 
@@ -258,8 +264,6 @@ The closed‑loop failure log .cursor/last-verify-failure.txt is updated by veri
 /repo-map — update Repo_Map.md (invokes scripts/dev/repo‑map.ps1)
 /eod — full end-of-day wrap-up (invokes eod‑file‑triage.ps1 + doc‑sync.ps1 + conditional doc/lesson updates + verify)
 /change-summary — generate commit/PR summary from git diff and proof bundles
-/init — (optional) bootstrap scaffold using start_up_prompt.md
-
 Commands use $ARGUMENTS for parameters (e.g., /verify --fix) and !`backtick` syntax for preprocessing context (e.g., !`git branch --show-current`). Commands support allowed-tools restrictions in their YAML frontmatter to limit what tools they can use.
 
 Important: for quality gates like /verify, always use explicit command invocation. Do not rely on skill auto‑invocation — Claude's LLM decides when to invoke skills automatically, and the trigger rate is approximately 50% baseline (80% with optimized descriptions), which is insufficient for mandatory workflow steps.
@@ -439,7 +443,7 @@ Define source‑to‑doc mapping rules for the doc‑check script (which .py fil
 
 Provide the following path when bringing a new engineer onto the project:
 
-Read: START_HERE.md, then AGENTS.md, then CLAUDE.md and CURSOR_RULES.md.
+Read: START_HERE.md, then AGENTS.md (Part 1 for universal governance, Part 2 for project-specific context), then CLAUDE.md and CURSOR_RULES.md.
 
 Clone the repo and set up Python and uv. Run pre‑commit install.
 

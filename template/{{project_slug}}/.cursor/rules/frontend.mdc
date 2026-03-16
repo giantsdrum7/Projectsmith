@@ -3,6 +3,8 @@ description: React/Vite patterns, component conventions
 globs: "apps/web/**"
 ---
 
+# FUTURE — This rule activates when apps/web/ contains frontend code. Not yet applicable at scaffold time.
+
 # Frontend Standards
 
 ## Components

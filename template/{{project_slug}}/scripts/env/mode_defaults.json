@@ -1,5 +1,5 @@
 {
-  "_comment": "Auto-generated \u2014 do not edit. Run scripts/env/generate_env_templates.py to regenerate.",
+  "_comment": "Auto-generated - do not edit. Run scripts/env/generate_env_templates.py to regenerate.",
   "offline": {
     "APP_MODE": "offline",
     "APP_ENV": "development",

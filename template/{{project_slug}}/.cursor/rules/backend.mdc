@@ -3,6 +3,8 @@ description: API patterns, Lambda/ECS conventions, request handling
 globs: "src/**/api/**"
 ---
 
+# FUTURE — This rule activates when src/**/api/ contains API endpoint code. Not yet applicable at scaffold time.
+
 # Backend Standards
 
 ## API Design

@@ -4,7 +4,7 @@ description: Review staged or unstaged changes for quality, security, and conven
 
 # Code Review
 
-Review current changes for quality, security, and convention compliance.
+Review current changes using the canonical review checklist.
 
 ## Instructions
 
@@ -13,18 +13,11 @@ Review current changes for quality, security, and convention compliance.
    - `git diff --cached` (staged diff)
    - If nothing is staged, fall back to `git diff` (unstaged changes)
 
-2. Analyze all changes against project conventions in `AGENTS.md`:
-   - **Security**: No secrets, tokens, or credentials in code
-   - **Tests**: New code has corresponding tests
-   - **Type hints**: All function signatures have type hints
-   - **Error handling**: No bare `except:`, custom exceptions for domain errors
-   - **Naming**: snake_case functions, PascalCase classes, UPPER_SNAKE_CASE constants
-   - **Imports**: stdlib, then third-party, then local; no wildcards
-   - **Documentation**: Public functions have Google-style docstrings
-
-3. Produce a review summary:
-   - **Files changed**: List with brief description
-   - **Issues found**: Grouped by severity (critical / warning / info)
+2. Apply the **canonical review checklist** at `.agent-config/checklists/code-review.md`
+3. Check all changes against project conventions in `AGENTS.md`
+4. Produce a review summary:
+   - **Files changed**: list with brief description
+   - **Issues found**: grouped by severity (critical / warning / info)
    - **Verdict**: Approve, Request Changes, or Needs Discussion
 
 If `$ARGUMENTS` contains a file path, focus the review on that file.

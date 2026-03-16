@@ -1,13 +1,13 @@
 start_up_guide.md — Full AI Project Scaffold Initialization Guide (AWS + Python + GitHub)
 Purpose
 
-This guide is the single source of truth for initializing a full (not MVP) reusable AI project scaffold in a brand‑new repository. It is designed so that a Cursor Agent or Claude Code agent can:
+This guide is the repo-root maintenance reference for the Projectsmith Copier template and the scaffold it emits. It is designed so that a Cursor Agent or Claude Code agent can:
 
-Create the entire folder and file structure shown below.
+Understand the authoritative emitted scaffold source under `template/{{project_slug}}/`.
 
-Populate key governance and operational files with high‑quality starter content.
+Update key governance and operational files with high‑quality starter content when the template evolves.
 
-Install a standardized workflow: layered governance, 3‑mode contract, staged verification, CI tiers, evaluation harness, daily workflow automation, and security defaults.
+Maintain a standardized workflow: layered governance, 3‑mode contract, staged verification, CI tiers, evaluation harness, daily workflow automation, and security defaults.
 
 Leave "fill‑me" placeholders where repo‑specific details must be added later (architecture, environment variables, run paths, etc.).
 
@@ -17,38 +17,30 @@ How to Use (Human)
 
 New project bootstrap flow (recommended):
 
-Create an empty project folder.
+Run Copier against this repository to generate a new project from the scaffold source in `template/{{project_slug}}/`.
 
-Drop in these three files at repo root:
+Copier emits the starter governance and workflow assets automatically. The generated scaffold already includes the current governance model: Planner-Critic-Executor collaboration, the Skills vs Commands vs Rules framework, the Tier A/B/C command model, six Claude skills, and four non-destructive Claude hooks.
 
-start_up_guide.md
+After generation, use the emitted project files as the canonical source of truth for day-to-day work: `START_HERE.md`, `AGENTS.md`, `CLAUDE.md`, `CURSOR_RULES.md`, and the docs/scripts shipped in the generated repository.
 
-start_up_prompt.md
+Use `start_up_prompt.md` from this template repo only as a maintenance prompt for post-generation initialization and template-alignment work. Use `continue.md` from this template repo to maintain the repo-root guidance for credentials, environment setup, and workflow expectations.
 
-continue.md
-
-Copy/paste the content of start_up_prompt.md into Cursor or Claude Code.
-
-The agent reads this guide and builds the scaffold in two to three phases (with human checkpoints).
-
-You then follow continue.md to connect GitHub and AWS credentials, secrets, and local development environment.
-
-Once the project's purpose is known, streamline the scaffold (remove unneeded modules) or extend it using the Full modules listed below.
+Once the generated project's purpose is known, streamline the scaffold (remove unneeded modules) or extend it using the Full modules listed below.
 
 How to Use (Agent)
 Required rules for agents
 
 Never paste secrets. Keys, tokens and credentials must not appear in any file. Use placeholders such as REDACTED_ORG_SPECIFIC or {{TEMPLATE_VAR}}.
 
-Treat the files listed in Human‑Only Files (see governance docs) as immutable after initialization—populate them with baseline content only when creating the scaffold.
+Treat the files listed in Human‑Only Files (see governance docs) as immutable after initialization—populate them with baseline content only when maintaining or extending the template.
 
-Follow the Phased Initialization Plan below; do not attempt to create everything in one go if the structure is large. Stop at the end of each phase to ask the human for approval before proceeding.
+Follow the Phased Initialization Plan below; the default assumption is that Copier has already emitted the baseline scaffold. Stop at the end of each phase to ask the human for approval before proceeding.
 
 Activation methods
 
-Prompt (recommended) – Use start_up_prompt.md. It instructs the agent to follow this guide and create the scaffold in phases.
+Prompt (recommended) – Use start_up_prompt.md. It instructs the agent to follow this guide and complete post-generation initialization in phases.
 
-Skill/Command (optional) – You may create a .cursor/skills/scaffold‑init/SKILL.md or .claude/commands/init.md that references this file and executes the same plan. Use that only if your toolchain supports skill‑based actions.
+Skill/Command (optional) – If your toolchain needs an initialization wrapper, keep it emitted-project-native and point it only at assets that exist in generated repositories. Do not depend on these repo-root maintenance docs from emitted project commands.
 
 Applicable When
 
@@ -99,6 +91,11 @@ Contract: The agent must create the following tree (or a documented superset). I
         scripts/
           generate.sh                 (optional helper)
 
+  .agent-config/
+    README.md                          (canonical asset convention docs)
+    checklists/
+      code-review.md                   (single canonical review checklist)
+
   .cursor/
     rules/
       core.mdc
@@ -106,12 +103,12 @@ Contract: The agent must create the following tree (or a documented superset). I
       executor.mdc
       refactoring.mdc
       llm‑routing.mdc             (optional in full scaffold)
-      backend.mdc                 (optional in full scaffold)
-      frontend.mdc                (optional in full scaffold)
+      backend.mdc                 (optional in full scaffold; FUTURE banner)
+      frontend.mdc                (optional in full scaffold; FUTURE banner)
     roles/
       IMPLEMENTER.md
       REVIEWER.md
-      REVIEW_CHECKLIST.md
+      REVIEW_CHECKLIST.md          (redirects to .agent-config/checklists/code-review.md)
       REFACTORER.md
       HANDOFF_NOTE_TEMPLATE.md
       RESEARCHER.md
@@ -134,6 +131,7 @@ Contract: The agent must create the following tree (or a documented superset). I
     skills/
       scaffold‑init/SKILL.md         (optional)
       docs‑cleanup/SKILL.md          (optional)
+    archive/                          (historical artifacts; .gitkeep)
     audits/                           (gitignored; proof bundle output)
     baseline_test_out/                (empty, for outputs)
     last‑verify‑failure.txt           (gitignored)
@@ -294,7 +292,7 @@ Create every folder and file in the Full Scaffold tree above. If you choose to o
 
 Populate governance documents with high‑quality starter content:
 
-AGENTS.md — portable rules, agent workflow, verification gates, 3‑mode contract summary. This file serves as the cross‑tool instruction standard (compatible with Cursor, Codex, Gemini CLI, GitHub Copilot, and others under the Linux Foundation AAIF).
+AGENTS.md — portable rules (Part 1: Universal Governance) and project-specific context (Part 2: Project-Specific). Part 1 covers non-negotiables, verification gates, allowed/forbidden operations, human-only file protocol, daily workflow, proof bundles, lessons learned, script interface, task handoff roles, artifact lifecycle, shared canonical asset conventions, and archive convention. Part 2 uses {{FILL}} placeholders for project identity, architecture, infrastructure, and team model. This file serves as the cross‑tool instruction standard (compatible with Cursor, Codex, Gemini CLI, GitHub Copilot, and others under the Linux Foundation AAIF).
 
 CLAUDE.md — Claude Code specifics: commands (review, status, verify, repo‑map, eod‑triage, doc‑check, change‑summary), agent definitions, hook configuration, safety restrictions. Include a pointer to AGENTS.md for portable rules (e.g., "See @AGENTS.md for universal project instructions").
 
@@ -302,7 +300,11 @@ CURSOR_RULES.md — thin index that references .cursor/rules/ modules and lists 
 
 .cursor/rules/*.mdc — copy core.mdc, testing.mdc, executor.mdc, refactoring.mdc; optionally include llm‑routing.mdc, backend.mdc, frontend.mdc. Each rule file uses YAML frontmatter with description, globs, and alwaysApply fields. Important: do not set both alwaysApply: true and globs: on the same rule (alwaysApply silently overrides globs).
 
-.cursor/roles/*.md — implementer, reviewer, refactorer, checklist, handoff template.
+.agent-config/README.md — documents the canonical-asset-vs-tool-native principle and the "reference, never duplicate" convention.
+
+.agent-config/checklists/code-review.md — the single canonical review checklist (~28 items across 6 categories). Tool-specific files (.claude/agents/code-reviewer.md, .cursor/roles/REVIEW_CHECKLIST.md) reference this file instead of maintaining separate copies.
+
+.cursor/roles/*.md — implementer, reviewer, refactorer, checklist (redirects to canonical), handoff template.
 
 .cursor/prompts/* — handoff packet, refactor packet, PR summary, bug fix, add env var, incident debug. Include placeholders for repo‑specific details.
 
@@ -507,14 +509,14 @@ How to contribute improvements:
 
 Safety rule: never include secrets, tokens, API keys, passwords, or connection strings in lessons or template docs. Redact all sensitive values.
 
-Notes for Future Upgrades (Copier & Template Repo)
+Current Template Reality (Copier & Template Repo)
 
-This scaffold will eventually be stored as a Copier template. In that scenario:
+Projectsmith already is a Copier template repo. In the current setup:
 
-copier.yaml becomes the authoritative list of variables (project_name, project_slug, aws_region, etc.).
+copier.yaml is the authoritative list of variables (project_name, project_slug, aws_region, etc.).
 
 .copier-answers.yml is generated per project, not checked in.
 
 Teams run copier update to pull improvements from the central scaffold repository.
 
-Until such a template exists, you can use this guide to manually create the directory structure with the help of Cursor/Claude.
+The authoritative scaffold source for emitted projects lives under `template/{{project_slug}}/`. Keep repo-root maintenance docs aligned with that emitted source rather than describing a separate manual copy/bootstrap flow.

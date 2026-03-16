@@ -1,7 +1,9 @@
 """Environment variable specification.
 
 This module is the single source of truth for all environment variables.
-Run scripts/env/generate_env_templates.py to regenerate mode_defaults.json and .env.example.
+Run scripts/env/generate_env_templates.py to regenerate the committed scaffold
+assets `.env.example` and `scripts/env/mode_defaults.json` before committing
+template changes.
 """
 
 from __future__ import annotations
