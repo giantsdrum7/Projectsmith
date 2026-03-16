@@ -44,6 +44,17 @@
     ]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-protected-files.ps1\""
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
@@ -51,6 +62,27 @@
           {
             "type": "command",
             "command": "pwsh \"$CLAUDE_PROJECT_DIR/.claude/hooks/lint-python.ps1\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh \"$CLAUDE_PROJECT_DIR/.claude/hooks/verify-reminder.ps1\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh \"$CLAUDE_PROJECT_DIR/.claude/hooks/stale-artifact-reminder.ps1\""
           }
         ]
       }

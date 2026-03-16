@@ -15,6 +15,8 @@ Before starting work:
 2. Read all files listed in the task's "Before Starting" or prerequisite reads
 3. Read `AGENTS.md` and relevant `.cursor/rules/` for any unfamiliar areas
 
+For non-trivial tasks, follow the **Planner-Critic-Executor** collaboration contract in `AGENTS.md`. The Executor (this role) implements only what has been approved through the deliberation cycle.
+
 ## Workflow
 1. **Read** the task packet (from `.cursor/prompts/HANDOFF_TASK_PACKET.md`)
 2. **Check** `REPO_MAP.md` for current project structure

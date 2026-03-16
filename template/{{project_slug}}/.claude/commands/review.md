@@ -3,7 +3,7 @@ description: Review staged changes for quality, security, and convention complia
 allowed-tools: Read, Grep, Glob, Bash
 ---
 
-Review staged changes for quality, security, and convention compliance.
+Review staged changes using the canonical review checklist.
 
 Gather context:
 !`git diff --cached --stat`
@@ -11,9 +11,12 @@ Gather context:
 
 ## Instructions
 
-1. Analyze all staged changes (git diff --cached)
-2. Check each file against the project conventions in @AGENTS.md
-3. Look for: secrets/credentials, missing tests, missing type hints, bare exceptions, naming violations
-4. Produce a review summary with: Files Changed, Issues Found (critical/warning/info), Verdict
+1. Gather the diff (staged preferred; fall back to unstaged if nothing staged)
+2. Apply the **canonical review checklist** at `.agent-config/checklists/code-review.md`
+3. Check all changes against project conventions in @AGENTS.md
+4. Produce a review summary:
+   - **Files changed**: list with brief description
+   - **Issues found**: grouped by severity (critical / warning / info)
+   - **Verdict**: Approve, Request Changes, or Needs Discussion
 
-If $ARGUMENTS contains a file path, focus the review on that file.
+If `$ARGUMENTS` contains a file path, focus the review on that file.

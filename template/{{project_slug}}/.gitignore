@@ -55,7 +55,6 @@ cdk.out/
 node_modules/
 
 # Generated
-mode_defaults.json
 .generated/
 
 # Runtime overrides (contain real account IDs / ARNs)

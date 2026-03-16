@@ -14,18 +14,10 @@ Review staged or committed code changes for quality, security issues, and compli
 Triggered by the /review command or when a PR review is requested.
 
 ## Checklist
-See `.cursor/roles/REVIEW_CHECKLIST.md` for the comprehensive review checklist.
 
-- [ ] No secrets, tokens, or credentials in code
-- [ ] All new public functions have type hints and docstrings
-- [ ] Error handling follows project conventions (no bare except)
-- [ ] Tests added for new functionality
-- [ ] Tests pass (verify-fast)
-- [ ] No unnecessary file changes or debug artifacts
-- [ ] Imports follow convention (stdlib → third-party → local)
-- [ ] Naming follows project conventions
-- [ ] Documentation updated if public API changed
-- [ ] Security: input validation, no SQL injection, no XSS vectors
+Use the **canonical review checklist** at `.agent-config/checklists/code-review.md`.
+
+Do not maintain a separate checklist here — reference the canonical source above. This ensures all review tools (Claude Code, Cursor, etc.) use the same checklist.
 
 ## Output Format
 Provide: Summary, Issues Found (severity: critical/warning/info), Verdict (Approve/Request Changes).

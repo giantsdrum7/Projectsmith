@@ -32,20 +32,16 @@ make day-to-day development faster or less frustrating. Low urgency, high future
 
 ## Entries
 
-### 2026-02-01 — Example: alwaysApply vs. globs Conflict in Cursor Rules
+### YYYY-MM-DD — Example: a small workflow note saved repeat setup time
 
-**Symptom:** A `.cursor/rules/*.mdc` file with both `alwaysApply: true` and `globs:`
-set was being applied to every file in every prompt, not just files matching the glob
-pattern. The intended scope restriction was silently ignored.
-**Root cause:** Undocumented Cursor behavior: `alwaysApply: true` overrides `globs:`
-entirely. Any rule with `alwaysApply: true` fires on every prompt regardless of the
-active file, making the `globs:` field irrelevant when both are present.
-**Fix:** Removed `alwaysApply: true` from every rule that also had `globs:`. Rules
-intended for specific file patterns use only `globs:`; rules intended for all files use
-only `alwaysApply: true`. No rule uses both.
-**Prevention:** Never set both `alwaysApply: true` and `globs:` on the same rule. Use
-one or the other. This is noted in `CURSOR_RULES.md`.
-**Links:** `.cursor/rules/`, `CURSOR_RULES.md`
-**Promoted to:** `CURSOR_RULES.md` — added warning note about alwaysApply + globs conflict (2026-02-01)
+**Symptom:** New contributors kept missing a routine setup or verification step during
+their first local run.
+**Root cause:** The step was known informally but was not written down in the most
+obvious project-facing location.
+**Fix:** Added a short note to the relevant emitted project doc or command so the tip is
+visible during normal work.
+**Prevention:** When a shortcut, reminder, or small convention repeatedly saves time,
+capture it in the nearest emitted project asset instead of leaving it in chat history.
+**Links:** `START_HERE.md`, `REPO_MAP.md`, `scripts/dev/README.md`
 
-<!-- Add project-specific lessons below. See continue.md §6.6 for the full workflow. -->
+<!-- Replace the example above with real project-specific lessons as they occur. -->

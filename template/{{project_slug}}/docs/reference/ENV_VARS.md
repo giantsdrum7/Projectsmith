@@ -1,22 +1,23 @@
 # Environment Variables — {{ project_name }}
 
 > Source of truth: `src/{{ project_slug }}/config/env_spec.py` (73 variables, 13 categories).
-> Generated templates: `scripts/env/mode_defaults.json`, `.env.example`.
+> Generated scaffold assets: `scripts/env/mode_defaults.json`, `.env.example`.
 
 ## Generated vs Hand-Edited Contract
 
 | File | Type | Purpose |
 |---|---|---|
 | `src/{{ project_slug }}/config/env_spec.py` | **Source of truth** | Defines all environment variables, their types, defaults, and categories |
-| `scripts/env/generate_env_templates.py` | Generator | Reads `env_spec.py` and produces the generated files below |
-| `.env.example` | **Generated** | Template with placeholder values for all variables |
-| `scripts/env/mode_defaults.json` | **Generated** | Default values per mode (offline, local-live, prod) |
+| `scripts/env/generate_env_templates.py` | Maintenance generator | Reads `env_spec.py` and regenerates the committed scaffold assets below |
+| `.env.example` | **Generated emitted asset** | Template with placeholder/default values for all variables |
+| `scripts/env/mode_defaults.json` | **Generated emitted asset** | Default values per mode (offline, local-live, prod) consumed directly by the env scripts |
 | `.env` | **Hand-edited** | Local overrides (gitignored, never committed) |
 
 1. **Always** edit `env_spec.py` as the source of truth for adding, removing, or modifying variables.
 2. **Regenerate** `.env.example` and `mode_defaults.json` by running `generate_env_templates.py`.
-3. **Never** edit `.env.example` or `mode_defaults.json` by hand — they will be overwritten.
-4. **Local overrides** go in `.env` only. This file is gitignored.
+3. **Commit** the regenerated `.env.example` and `scripts/env/mode_defaults.json` so generated projects receive them directly from Copier.
+4. **Never** edit `.env.example` or `mode_defaults.json` by hand — they will be overwritten.
+5. **Local overrides** go in `.env` only. This file is gitignored.
 
 ---
 

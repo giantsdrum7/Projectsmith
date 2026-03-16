@@ -19,9 +19,6 @@ env/
 !**/scripts/env/
 !**/scripts/env/**
 
-# Re-include template mode_defaults.json (excluded by template .gitignore)
-!template/**/mode_defaults.json
-
 # Node
 node_modules/
 npm-debug.log*
