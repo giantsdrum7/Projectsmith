@@ -16,7 +16,7 @@ Files at the Projectsmith repo root support the **template product itself**:
 | `docs/scaffold/PRODUCT_DESIGN.md` | Product design spec, ownership model, CI contract |
 | `docs/scaffold/CAPABILITY_MATRIX.md` | IDE parity audit: which capabilities map to which files |
 | `scripts/dev/validate-template.ps1` | Local validation script for template contributors |
-| `.github/workflows/validate-template.yml` | CI workflow that validates all three presets on push/PR |
+| `.github/workflows/validate-template.yml` | CI workflow that validates all four presets on push/PR |
 | `CONTRIBUTING.md` | This file |
 | `README.md` | Repo-level overview |
 
@@ -80,8 +80,11 @@ Optional modules are controlled by boolean flags in `copier.yaml`:
 | `include_observability` | Observability (OTel) | `observability/` |
 | `include_security` | Security controls | `security/` |
 | `include_evals` | Evaluation harness | `evals/` |
+| `include_e2e_tests` | Playwright browser testing | `apps/web/e2e/`, `scripts/e2e-*`, `docs/testing-e2e.md`, `.github/workflows/e2e.yml`, `.nvmrc` |
 
-These are implemented via Copier's `_exclude` list in `copier.yaml`. When a flag is `false`, the corresponding directory is excluded from generation.
+`include_e2e_tests` requires `include_frontend=true`. Copier hides the question when `include_frontend=false` and raises a validation error if the combination is forced via `--data`.
+
+These are implemented via Copier's `_exclude` list in `copier.yaml`. When a flag is `false`, the corresponding paths are excluded from generation.
 
 Cursor rules like `frontend.mdc` are also conditionally excluded via the same mechanism.
 
@@ -90,10 +93,10 @@ Cursor rules like `frontend.mdc` are also conditionally excluded via the same me
 Before submitting changes, validate that the template still generates correct projects:
 
 ```powershell
-# Validate all three presets
+# Validate all four presets
 pwsh scripts/dev/validate-template.ps1 -Preset all
 
-# Validate a single preset
+# Validate a single preset (minimal | ai-core | full-stack | e2e)
 pwsh scripts/dev/validate-template.ps1 -Preset minimal
 
 # Keep output for debugging
@@ -116,13 +119,14 @@ The script generates a project for each preset and checks:
 
 ## GitHub Actions Validation Workflow
 
-`.github/workflows/validate-template.yml` runs the same checks in CI on every push/PR to `main`. It uses a matrix strategy with three presets:
+`.github/workflows/validate-template.yml` runs the same checks in CI on every push/PR to `main`. It uses a matrix strategy with four presets:
 
 | Preset | What it proves |
 |---|---|
 | **minimal** | Base scaffold is truly agnostic — no providers, no optional modules |
 | **ai-core** | Typical AI project works (Bedrock, DynamoDB, evals enabled) |
-| **full-stack** | Maximum complexity passes (all modules on) |
+| **full-stack** | Maximum complexity passes (all modules on, e2e off) |
+| **e2e** | Playwright scaffold generates correctly with `include_frontend=true` + `include_e2e_tests=true` |
 
 ## Contributing Improvements from Downstream Projects
 

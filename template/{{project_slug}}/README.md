@@ -33,6 +33,9 @@ pwsh scripts/verify.ps1
 - `CURSOR_RULES.md` — Cursor rule index
 - `docs/architecture/ARCHITECTURE.md` — System architecture
 - `docs/reference/ENV_VARS.md` — Environment variable reference
+{% if include_e2e_tests %}
+- `docs/testing-e2e.md` — Playwright browser testing guide
+{% endif %}
 
 ## License
 

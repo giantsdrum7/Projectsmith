@@ -120,16 +120,20 @@ Some capabilities exist only in the upstream product (template CI, authoring doc
 | `include_observability` | bool | `false` |
 | `include_security` | bool | `false` |
 | `include_evals` | bool | `true` |
+| `include_e2e_tests` | bool | `false` |
+
+`include_e2e_tests` is gated by `when: "{{ include_frontend }}"` (hidden when frontend is off) and enforced by a cross-variable validator that aborts generation if the combination `include_e2e_tests=true` + `include_frontend=false` is forced via `--data`.
 
 ## 7. Template CI Contract
 
-Projectsmith's own CI validates three representative presets:
+Projectsmith's own CI validates four representative presets:
 
 | Preset | Config | What it proves |
 |---|---|---|
 | **Minimal** | All optional modules off, provider=none, metadata_store=none | Base scaffold is truly agnostic and functional |
 | **AI-core** | llm_provider=bedrock, include_evals=true, metadata_store=dynamodb | Typical AI project works end-to-end |
-| **Full-stack** | All modules on, frontend + infra + observability + security + evals | Maximum complexity still passes |
+| **Full-stack** | All non-e2e modules on: frontend + infra + observability + security + evals | Maximum complexity still passes (e2e intentionally off to keep full-stack independent) |
+| **E2E** | include_frontend=true + include_e2e_tests=true | Playwright scaffold generates correctly; files appear where expected, e2e/frontend dependency enforced |
 
 For each preset, CI runs:
 1. `copier copy` with preset answers

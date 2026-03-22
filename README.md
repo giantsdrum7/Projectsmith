@@ -13,6 +13,7 @@ After `copier copy`, your generated project includes:
 - CI/CD workflows (lint, type-check, test, eval, security scan)
 - Verification gates and daily workflow automation
 - Lessons Learned system with upstream promotion protocol
+- Optional modules: frontend (React/Vite), infra-as-code, observability, security controls, eval harness, Playwright browser testing
 
 ## Quick Start
 ```powershell
