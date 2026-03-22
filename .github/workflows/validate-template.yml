@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        preset: [minimal, ai-core, full-stack]
+        preset: [minimal, ai-core, full-stack, e2e]
         include:
           - preset: minimal
             answers: |
@@ -91,8 +91,30 @@ jobs:
               include_observability=true
               include_security=true
               include_evals=true
+              include_e2e_tests=false
             expected_present: "evals apps infra observability security .cursor/rules/frontend.mdc"
-            expected_absent: ""
+            expected_absent: "apps/web/e2e .nvmrc .github/workflows/e2e.yml docs/testing-e2e.md"
+          - preset: e2e
+            answers: |
+              project_name=TestE2E
+              project_slug=test_e2e
+              project_description=E2E preset validation
+              github_org=test-org
+              github_team_slug=core-team
+              aws_region=us-east-1
+              python_version=3.12
+              license=MIT
+              claude_code_model=claude-opus-4-6
+              metadata_store=none
+              llm_provider=none
+              include_frontend=true
+              include_infra=false
+              include_observability=false
+              include_security=false
+              include_evals=false
+              include_e2e_tests=true
+            expected_present: "apps/web/e2e apps/web/e2e/package.json apps/web/e2e/playwright.config.ts apps/web/e2e/tests/smoke.spec.ts .nvmrc .github/workflows/e2e.yml docs/testing-e2e.md scripts/e2e-install.ps1 scripts/e2e-test.ps1"
+            expected_absent: "infra observability security evals"
 
     steps:
       - uses: actions/checkout@v6

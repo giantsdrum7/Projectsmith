@@ -20,7 +20,7 @@
 #>
 
 param(
-    [ValidateSet("minimal", "ai-core", "full-stack", "all")]
+    [ValidateSet("minimal", "ai-core", "full-stack", "e2e", "all")]
     [string]$Preset = "all",
 
     [string]$OutputDir,
@@ -98,17 +98,52 @@ $Presets = @{
             "--data", "include_infra=true",
             "--data", "include_observability=true",
             "--data", "include_security=true",
-            "--data", "include_evals=true"
+            "--data", "include_evals=true",
+            "--data", "include_e2e_tests=false"
         )
         ExpectedPresent = @("evals", "apps", "infra", "observability", "security", ".cursor/rules/frontend.mdc")
-        ExpectedAbsent  = @()
+        ExpectedAbsent  = @("apps/web/e2e", ".nvmrc", ".github/workflows/e2e.yml", "docs/testing-e2e.md")
+    }
+    "e2e" = @{
+        Slug = "test_e2e"
+        Data = @(
+            "--data", "project_name=TestE2E",
+            "--data", "project_slug=test_e2e",
+            "--data", "project_description=E2E preset validation",
+            "--data", "github_org=test-org",
+            "--data", "github_team_slug=core-team",
+            "--data", "aws_region=us-east-1",
+            "--data", "python_version=3.12",
+            "--data", "license=MIT",
+            "--data", "claude_code_model=claude-opus-4-6",
+            "--data", "metadata_store=none",
+            "--data", "llm_provider=none",
+            "--data", "include_frontend=true",
+            "--data", "include_infra=false",
+            "--data", "include_observability=false",
+            "--data", "include_security=false",
+            "--data", "include_evals=false",
+            "--data", "include_e2e_tests=true"
+        )
+        ExpectedPresent = @(
+            "apps/web/e2e",
+            "apps/web/e2e/package.json",
+            "apps/web/e2e/playwright.config.ts",
+            "apps/web/e2e/tests/smoke.spec.ts",
+            ".nvmrc",
+            ".github/workflows/e2e.yml",
+            "docs/testing-e2e.md",
+            "scripts/e2e-install.ps1",
+            "scripts/e2e-test.ps1"
+        )
+        ExpectedAbsent  = @("infra", "observability", "security", "evals")
     }
 }
 
 # ── Determine which presets to run ───────────────────────────────────────────
 
 $PresetsToRun = if ($Preset -eq "all") {
-    @("minimal", "ai-core", "full-stack")
+    @("minimal", "ai-core", "full-stack", "e2e")
 } else {
     @($Preset)
 }
