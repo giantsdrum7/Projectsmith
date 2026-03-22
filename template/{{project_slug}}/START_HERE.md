@@ -84,3 +84,6 @@ Next, use the emitted project assets to finish setup:
 - `docs/architecture/ARCHITECTURE.md` — capture project-specific architecture decisions
 - `AGENTS.md`, `CLAUDE.md`, and `CURSOR_RULES.md` — review governance, commands, skills, rules, and hooks
 - `scripts/env/use-env.ps1` / `scripts/env/use-env.sh` plus `scripts/verify-fast.ps1` — enter `offline` mode and verify the local setup
+{% if include_e2e_tests %}
+- `docs/testing-e2e.md` — Playwright browser testing is included; run `pwsh scripts/e2e-install.ps1` (or `bash scripts/e2e-install.sh`) to download browsers, then `pwsh scripts/e2e-test.ps1` to confirm the setup
+{% endif %}
