@@ -10,6 +10,11 @@ _exclude:
   - "{% if not include_observability %}observability{% endif %}"
   - "{% if not include_security %}security{% endif %}"
   - "{% if not include_evals %}evals{% endif %}"
+  - "{% if not include_e2e_tests %}**/apps/web/e2e{% endif %}"
+  - "{% if not include_e2e_tests %}**/scripts/e2e-*{% endif %}"
+  - "{% if not include_e2e_tests %}**/docs/testing-e2e.md{% endif %}"
+  - "{% if not include_e2e_tests %}.nvmrc{% endif %}"
+  - "{% if not include_e2e_tests %}**/.github/workflows/e2e.yml{% endif %}"
 
 project_name:
   type: str
@@ -101,6 +106,13 @@ include_evals:
   type: bool
   help: "Include evaluation harness (promptfoo)"
   default: true
+
+include_e2e_tests:
+  type: bool
+  when: "{{ include_frontend }}"
+  help: "Include Playwright browser-testing scaffold (apps/web/e2e/). Adds @playwright/test, wrapper scripts, and a skip-safe smoke test. Only available when include_frontend is enabled."
+  default: false
+  validator: "{% if include_e2e_tests and not include_frontend %}include_e2e_tests requires include_frontend=true — e2e tests target the web app in apps/web/{% endif %}"
 
 _message_after_copy: |
   ✓ Project '{{ project_name }}' generated successfully!

@@ -1,0 +1,61 @@
+# E2E Tests (Playwright) — manual dispatch only
+#
+# This workflow is intentionally NOT triggered on push or pull_request.
+# Fresh generated repos do not yet have a deployed web app, so an always-on
+# trigger would cause immediate failures. Once the project has a stable
+# preview or staging environment, change the trigger to suit your needs.
+#
+# Usage:
+#   1. Open the Actions tab in GitHub.
+#   2. Select "E2E Tests (Playwright)".
+#   3. Click "Run workflow" and supply the base_url input.
+
+name: E2E Tests (Playwright)
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Base URL to test against (e.g. https://staging.example.com)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: Playwright smoke test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Install Node dependencies
+        working-directory: apps/web/e2e
+        run: npm install
+
+      - name: Install Playwright browsers
+        working-directory: apps/web/e2e
+        run: npx playwright install chromium --with-deps
+
+      - name: Run e2e tests
+        working-directory: apps/web/e2e
+        env:
+          BASE_URL: "{% raw %}${{ inputs.base_url }}{% endraw %}"
+        run: npx playwright test
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/e2e/playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
