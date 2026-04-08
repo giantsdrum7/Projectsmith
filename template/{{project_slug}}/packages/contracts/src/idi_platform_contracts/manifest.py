@@ -5,13 +5,17 @@ are implemented post-generation per project requirements. This skeleton
 provides the base fields shared across all execution types.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
 from .enums import ExecutionStatus, TaskType
 
 __all__ = ["ExecutionManifest"]
+
+
+def _utcnow() -> datetime:
+    return datetime.now(UTC)
 
 
 class ExecutionManifest(BaseModel):
@@ -28,7 +32,7 @@ class ExecutionManifest(BaseModel):
     tenant_id: str = Field(description="Tenant identifier from Cognito custom:tenant_id")
     execution_id: str = Field(description="Unique execution identifier (ULID recommended)")
     status: ExecutionStatus = Field(default=ExecutionStatus.pending, description="Current execution status")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Execution creation timestamp")
+    created_at: datetime = Field(default_factory=_utcnow, description="Execution creation timestamp")
 
     # {% raw %}{{FILL: Add capability extensions post-generation}}{% endraw %}
     # Example extensions to add per project:

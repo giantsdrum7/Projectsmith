@@ -9,11 +9,15 @@ This model exists to verify that:
 Replace or extend with real contract models post-generation.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
 __all__ = ["SampleManifest"]
+
+
+def _utcnow() -> datetime:
+    return datetime.now(UTC)
 
 
 class SampleManifest(BaseModel):
@@ -24,5 +28,5 @@ class SampleManifest(BaseModel):
     sample_id: str = Field(description="Unique identifier for the sample")
     name: str = Field(description="Human-readable name")
     value: float = Field(default=0.0, description="Numeric value for testing serialization")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
+    created_at: datetime = Field(default_factory=_utcnow, description="Creation timestamp")
     tags: list[str] = Field(default_factory=list, description="Arbitrary tags for testing collection fields")
