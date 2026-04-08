@@ -1,0 +1,23 @@
+# Gitleaks configuration — false-positive suppressions
+# Only add generic patterns here. Do NOT add project-specific secrets or allowlists.
+
+title = "gitleaks config"
+
+[allowlist]
+  description = "Global allowlist for common false positives"
+
+  # Test fixture paths that look like AWS keys but are not real credentials
+  paths = [
+    '''tests/fixtures/.*''',
+    '''tests/integration/.*''',
+    '''packages/contracts/tests/.*''',
+  ]
+
+  # Example ARNs and placeholder values used in documentation and config templates
+  regexes = [
+    '''arn:aws:.*:123456789012:.*''',
+    '''arn:aws:.*:000000000000:.*''',
+    '''AKIAIOSFODNN7EXAMPLE''',
+    '''wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY''',
+    '''s3://example-bucket/.*''',
+  ]

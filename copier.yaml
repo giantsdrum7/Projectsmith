@@ -40,6 +40,24 @@ github_team_slug:
   help: "GitHub team slug for CODEOWNERS (e.g., 'core-team')"
   default: "core-team"
 
+client_id:
+  type: str
+  help: "Per-client identifier (e.g., idi, stevens, hope). Used in resource naming, config paths, tenant_id seeding."
+
+deployment_namespace:
+  type: str
+  default: "{{ project_slug }}-{{ client_id }}-{{ environment_tier }}"
+  help: "AWS resource prefix (e.g., portal-stevens-prod). Used in CDK stack naming, S3 bucket names, DynamoDB table names."
+
+environment_tier:
+  type: str
+  choices:
+    - dev
+    - staging
+    - prod
+  default: dev
+  help: "Deployment environment tier. Distinct from the 3-mode runtime contract (offline/local-live/prod). Controls CDK deployment target naming."
+
 aws_region:
   type: str
   help: "AWS region for all resources"

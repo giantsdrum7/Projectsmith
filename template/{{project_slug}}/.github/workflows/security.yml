@@ -52,4 +52,4 @@ jobs:
 
       - name: Run pip-audit
         run: uv run pip-audit
-        continue-on-error: true  # {% raw %}{{FILL: Set to false when ready to enforce}}{% endraw %}
+        continue-on-error: false

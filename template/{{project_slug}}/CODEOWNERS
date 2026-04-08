@@ -1,15 +1,14 @@
 # Default owners — adjust to your team
 * @{{ github_org }}/{{ github_team_slug }}
 
-# Governance files — human lead only
-AGENTS.md @{{ github_org }}/project-lead
-CLAUDE.md @{{ github_org }}/project-lead
-CURSOR_RULES.md @{{ github_org }}/project-lead
-CODEOWNERS @{{ github_org }}/project-lead
-.pre-commit-config.yaml @{{ github_org }}/project-lead
-pyproject.toml @{{ github_org }}/project-lead
+# Governance files — project lead only
+AGENTS.md @{{ github_org }}/{{ github_team_slug }}
+CLAUDE.md @{{ github_org }}/{{ github_team_slug }}
+CURSOR_RULES.md @{{ github_org }}/{{ github_team_slug }}
+.cursor/rules/ @{{ github_org }}/{{ github_team_slug }}
+.claude/ @{{ github_org }}/{{ github_team_slug }}
 
-# Security-sensitive paths
-security/ @{{ github_org }}/security-team
+# Security + deploy — core team
+security/ @{{ github_org }}/{{ github_team_slug }}
 .github/workflows/ @{{ github_org }}/{{ github_team_slug }}
 scripts/deploy/ @{{ github_org }}/{{ github_team_slug }}
