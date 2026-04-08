@@ -1,0 +1,71 @@
+# Backend Deployment — CDK deploy with OIDC authentication
+# Conditional on include_infra=true (copier excludes this file otherwise)
+# Pattern adopted from HopeAI OIDC deploy pattern (Audit D: Platform Standard)
+
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - 'src/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  PYTHON_VERSION: "{{ python_version }}"
+  AWS_REGION: "{{ aws_region }}"
+
+jobs:
+  deploy:
+    name: Deploy Backend Stacks
+    runs-on: ubuntu-latest
+    environment: {% raw %}${{ github.event.inputs.environment || 'dev' }}{% endraw %}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: {% raw %}${{ env.PYTHON_VERSION }}{% endraw %}
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: {% raw %}${{ secrets.AWS_DEPLOY_ROLE_ARN }}{% endraw %}
+          aws-region: {% raw %}${{ env.AWS_REGION }}{% endraw %}
+
+      - name: Install CDK CLI
+        run: npm install -g aws-cdk
+
+      - name: Install CDK dependencies
+        working-directory: infra/cdk
+        run: pip install -r requirements.txt
+
+      - name: CDK Deploy
+        working-directory: infra/cdk
+        run: |
+          cdk deploy --all \
+            --context client={% raw %}${{ secrets.CLIENT_ID }}{% endraw %} \
+            --context env={% raw %}${{ secrets.ENVIRONMENT_TIER }}{% endraw %} \
+            --require-approval never
+
+      - name: Post-deploy verification
+        run: |
+          chmod +x scripts/deploy/post-deploy-verify.sh
+          ./scripts/deploy/post-deploy-verify.sh \
+            --namespace "{% raw %}${{ secrets.DEPLOYMENT_NAMESPACE }}{% endraw %}" \
+            --region "{% raw %}${{ env.AWS_REGION }}{% endraw %}"

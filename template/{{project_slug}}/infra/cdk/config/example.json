@@ -1,0 +1,19 @@
+{
+  "client_id": "example",
+  "deployment_namespace": "{{ deployment_namespace }}",
+  "aws_region": "{{ aws_region }}",
+  "cognito": {
+    "allowed_domains": ["@example.com"],
+    "callback_urls": ["http://localhost:5173/callback"],
+    "logout_urls": ["http://localhost:5173/"]
+  },
+  "features": {
+    "proposal_gen": true,
+    "chat": true,
+    "documents": true,
+    "rate_cases": false
+  },
+  "bedrock": {
+    "model_id": "us.anthropic.claude-sonnet-4-6-20250514-v1:0"
+  }
+}

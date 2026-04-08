@@ -7,6 +7,8 @@ _exclude:
   - "{% if not include_frontend %}apps{% endif %}"
   - "{% if not include_frontend %}**/frontend.mdc{% endif %}"
   - "{% if not include_infra %}infra{% endif %}"
+  - "{% if not include_infra %}**/scripts/deploy{% endif %}"
+  - "{% if not include_infra %}**/.github/workflows/deploy-backend.yml{% endif %}"
   - "{% if not include_observability %}observability{% endif %}"
   - "{% if not include_security %}security{% endif %}"
   - "{% if not include_evals %}evals{% endif %}"
