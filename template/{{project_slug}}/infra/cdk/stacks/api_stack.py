@@ -82,14 +82,6 @@ class ApiStack(Stack):
             timeout_seconds=10,
         )
 
-        authorizer = apigw.TokenAuthorizer(
-            self,
-            "JwtAuthorizer",
-            authorizer_name=f"{namespace}-jwt-authorizer",
-            handler=self.authorizer_function.function,
-            results_cache_ttl=Duration.minutes(5),
-        )
-
         # --- API Gateway REST API ---
         self.api = apigw.RestApi(
             self,
@@ -103,10 +95,14 @@ class ApiStack(Stack):
                 metrics_enabled=True,
                 logging_level=apigw.MethodLoggingLevel.INFO,
             ),
-            default_method_options=apigw.MethodOptions(
-                authorizer=authorizer,
-                authorization_type=apigw.AuthorizationType.CUSTOM,
-            ),
+        )
+
+        self.authorizer = apigw.TokenAuthorizer(
+            self,
+            "JwtAuthorizer",
+            authorizer_name=f"{namespace}-jwt-authorizer",
+            handler=self.authorizer_function.function,
+            results_cache_ttl=Duration.minutes(5),
         )
 
         # Health endpoint (no auth required)
@@ -115,6 +111,15 @@ class ApiStack(Stack):
             "GET",
             apigw.LambdaIntegration(self.api_handler.function),
             authorization_type=apigw.AuthorizationType.NONE,
+        )
+
+        # Placeholder protected route — demonstrates authorizer wiring
+        v1 = self.api.root.add_resource("v1")
+        v1.add_method(
+            "GET",
+            apigw.LambdaIntegration(self.api_handler.function),
+            authorizer=self.authorizer,
+            authorization_type=apigw.AuthorizationType.CUSTOM,
         )
 
         # TODO: Add API routes post-generation
