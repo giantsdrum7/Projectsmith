@@ -1,0 +1,25 @@
+{
+  "_comment": "This file is PUBLIC and NON-SECRET. Feature flags are UX visibility controls only — not authorization. Authorization is enforced by backend capability bundles.",
+  "branding": {
+    "appName": "Example Portal",
+    "logoUrl": "/assets/logo.svg",
+    "primaryColor": "#2563eb",
+    "accentColor": "#f59e0b",
+    "fontFamily": "Inter, system-ui, sans-serif",
+    "heroTitle": "Welcome to Example Portal",
+    "heroSubtitle": "AI-powered consulting tools"
+  },
+  "features": {
+    "proposalGen": true,
+    "chat": true,
+    "documents": true,
+    "rateCases": false
+  },
+  "navigation": [
+    { "label": "Dashboard", "path": "/portal", "icon": "layout-dashboard", "featureKey": null },
+    { "label": "Proposals", "path": "/portal/proposals", "icon": "file-text", "featureKey": "proposalGen" },
+    { "label": "Chat", "path": "/portal/chat", "icon": "message-circle", "featureKey": "chat" },
+    { "label": "Documents", "path": "/portal/documents", "icon": "folder", "featureKey": "documents" },
+    { "label": "Rate Cases", "path": "/portal/rate-cases", "icon": "calculator", "featureKey": "rateCases" }
+  ]
+}

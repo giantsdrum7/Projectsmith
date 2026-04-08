@@ -19,7 +19,7 @@ This file indexes `.cursor/rules/*.mdc` modules. See **AGENTS.md** for universal
 | `cdk.mdc` | `globs: infra/**` | CDK conventions: stack naming, construct patterns, IAM least-privilege, alarms |
 | `data-access.mdc` | `globs: src/**/tools/**, src/**/api/**, src/**/orchestration/**` | DynamoDB access patterns, tenant isolation, atomic operations, GSI usage |
 | `api-contract.mdc` | `globs: src/**/api/**, apps/web/src/lib/**, packages/**` | Shared contract discipline, type generation, API shape ownership |
-| `frontend.mdc` | `globs: apps/web/**` | **FUTURE** — React/Vite patterns, component structure, state management |
+| `frontend.mdc` | `globs: apps/web/**` | React/Vite patterns, provider composition, config-driven navigation, testing |
 
 > **Important:** Do not set both `alwaysApply: true` and `globs:` on the same rule. `alwaysApply` silently overrides `globs` (undocumented behavior).
 

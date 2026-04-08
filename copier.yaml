@@ -6,6 +6,7 @@ _templates_suffix: ""
 _exclude:
   - "{% if not include_frontend %}apps{% endif %}"
   - "{% if not include_frontend %}**/frontend.mdc{% endif %}"
+  - "{% if not include_frontend %}**/.github/workflows/deploy-frontend.yml{% endif %}"
   - "{% if not include_infra %}infra{% endif %}"
   - "{% if not include_infra %}**/scripts/deploy{% endif %}"
   - "{% if not include_infra %}**/.github/workflows/deploy-backend.yml{% endif %}"

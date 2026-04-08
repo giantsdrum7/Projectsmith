@@ -23,9 +23,11 @@ def _load_env_spec() -> types.ModuleType:
 
     spec_file = candidates[0] / "config" / "env_spec.py"
     spec = importlib.util.spec_from_file_location("env_spec", spec_file)
-    module = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
-    sys.modules[spec.name] = module  # type: ignore[index]
-    spec.loader.exec_module(module)  # type: ignore[union-attr]
+    assert spec is not None, f"Failed to create ModuleSpec from {spec_file}"
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    assert spec.loader is not None, f"ModuleSpec for {spec_file} has no loader"
+    spec.loader.exec_module(module)
     return module
 
 

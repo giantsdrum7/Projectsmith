@@ -1,29 +1,86 @@
 ---
-description: React/Vite patterns, component conventions
+description: React/Vite patterns, component conventions, provider composition, config-driven navigation
 globs: "apps/web/**"
 ---
 
-# FUTURE — This rule activates when apps/web/ contains frontend code. Not yet applicable at scaffold time.
-
 # Frontend Standards
 
+## Provider Composition Order
+
+The provider stack is fixed and intentional — do not reorder:
+
+```
+QueryClientProvider          ← outermost: data fetching infra
+  → AuthProvider             ← auth state (Cognito/Amplify)
+    → ClientConfigProvider   ← fetches client-config.json at startup
+      → ThemeProvider        ← consumes config, applies CSS vars
+        → App               ← routes and pages
+```
+
+Each provider has a single responsibility. ClientConfigProvider is the single owner of runtime client config. ThemeProvider reads theme tokens from it — never fetches independently.
+
+## Config-Driven Navigation
+
+Sidebar navigation items are derived from feature flags via ClientConfigProvider. Never hardcode route lists or `clientKey === 'x'` conditionals.
+
+- `client-config.json` declares `navigation[]` with `featureKey` references
+- PortalLayout filters items by `features[featureKey]`
+- Adding a new page: add a nav entry in config + a route in App.tsx + the page component
+
+## Auth Visibility vs Authorization
+
+Frontend feature flags (`features.*` in client-config.json) are UX visibility controls only — they hide UI elements. Backend capability bundle enforcement is the authorization layer. Never rely on hidden routes for security.
+
+## Shell-First Composition
+
+PortalLayout is the single layout wrapper (sidebar + header + content). Do not create per-page sidebar or header assembly. All portal pages render inside PortalLayout as children.
+
+## No Hand-Written Duplicate API Types
+
+All API request/response types come from `packages/contracts/` via the generation pipeline (`npm run generate-types`). Never hand-write types that duplicate contract models. Import from `@/types/generated/` for contract types.
+
 ## Components
-- One component per file
-- Use functional components with hooks
-- Co-locate styles, tests, and types with components
-- Prefix shared components with project namespace
+
+- Functional components only, hooks-first. No class components.
+- One component per file.
+- Co-locate tests with components or in `__tests__/`.
+- Prefix shared components with project namespace if extracting to a library.
+
+## Styling
+
+- Tailwind utility classes only. No CSS modules, no styled-components, no inline `style` props.
+- Use `cn()` (clsx + tailwind-merge) for conditional classes.
+- Theme values accessed via CSS custom properties: `text-primary`, `bg-accent`, `font-sans`.
 
 ## State Management
-- Use React Query for server state
-- Use Context/Zustand for client state
-- Avoid prop drilling beyond 2 levels
+
+- Server state: TanStack React Query (`@tanstack/react-query`).
+- Client state: React Context for cross-cutting concerns, local `useState` otherwise.
+- Avoid prop drilling beyond 2 levels — use context or composition.
 
 ## Performance
-- Lazy-load routes and heavy components
-- Memoize expensive computations (useMemo)
-- Use virtualization for long lists
+
+- Only runtime config loading (`ClientConfigProvider`) may block initial shell render; all other provider work should be non-blocking.
+- Lazy-load page components with `React.lazy()` + `Suspense`.
+- Memoize expensive computations with `useMemo`.
+- Use virtualization for long lists.
+
+## Testing
+
+- Every new component gets a co-located or integration test.
+- Vitest + React Testing Library (RTL).
+- Test behavior, not implementation details.
+- Mock providers using test wrappers (see `__tests__/setup.ts`).
+
+## Accessibility
+
+- Semantic HTML: use `<nav>`, `<main>`, `<aside>`, `<header>`, `<button>` — not generic `<div>` for interactive elements.
+- `aria-label` on interactive elements without visible text labels.
+- Keyboard navigation: all interactive elements must be focusable and operable via keyboard.
+- Color contrast: follow WCAG 2.1 AA minimums.
 
 ## Security
-- Sanitize all user input before rendering
-- Never store tokens in localStorage (use httpOnly cookies)
-- Validate environment variables at build time
+
+- Sanitize user input before rendering.
+- Never store tokens in localStorage — use Amplify session management.
+- Validate environment variables at build time via `env.ts`.

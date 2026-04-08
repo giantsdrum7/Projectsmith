@@ -51,7 +51,7 @@ coverage.xml
 # Synthesis output can contain resolved account IDs, ARNs, and inline policy docs
 cdk.out/
 
-# Node (for future frontend modules)
+# Node
 node_modules/
 
 # Generated
