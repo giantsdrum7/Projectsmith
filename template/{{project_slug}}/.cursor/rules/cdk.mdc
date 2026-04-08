@@ -1,0 +1,38 @@
+---
+description: CDK infrastructure conventions, stack naming, construct patterns
+globs: "infra/**"
+---
+
+# CDK Infrastructure Standards
+
+## Stack Naming
+- All stacks use `{deployment_namespace}-{stack_purpose}` (e.g., `portal-stevens-dev-data`)
+- Resource names derived from config context — never hardcoded strings
+- No hardcoded AWS account IDs, regions, or ARNs anywhere in CDK code
+
+## Construct Preferences
+- Prefer L2/L3 constructs over L1 (`Cfn*`) unless an L2 does not exist
+- Wrap repeated patterns in custom L3 constructs (see `constructs/lambda_function.py`, `constructs/monitored_table.py`)
+- Keep constructs single-responsibility: one construct, one resource group
+
+## Resource Configuration
+- All resource names derived from `namespace` and config dict, never hardcoded
+- Use `config` dict from context for client-specific values (table names, bucket names, feature flags)
+- Environment-tier logic lives in config files (`config/example.json`), not in stack code
+
+## IAM
+- Least-privilege: scope policies to `{namespace}-*` resource ARNs
+- No wildcard (`*`) resource ARNs in production policies
+- Use `grant_*` methods on L2 constructs instead of hand-rolling IAM statements
+- Service roles scoped to the stack's own resources only
+
+## Alarms
+- Each stack owns its own alarms (distributed alarm model)
+- Alarm names follow `{namespace}-{resource}-{metric}` pattern
+- Use `TreatMissingData.NOT_BREACHING` for low-traffic resources
+
+## Testing
+- CDK assertions for resource existence (`has_resource_properties`)
+- Assert resource property values match config-derived names
+- Test that IAM policies are scoped (no `Resource: *`)
+- Snapshot tests for stack template stability

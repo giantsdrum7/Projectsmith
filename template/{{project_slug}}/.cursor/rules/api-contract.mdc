@@ -1,0 +1,34 @@
+---
+description: Shared contract discipline, type generation, API shape ownership
+globs: "src/**/api/**, apps/web/src/lib/**, packages/**"
+---
+
+# API Contract Standards
+
+## Contract Ownership
+- All API request/response shapes MUST be defined in `packages/contracts/`
+- The contracts package is the single source of truth for data shapes across backend and frontend
+- Never define inline request/response types in route handlers or frontend code
+
+## Type Generation
+- Frontend TypeScript types are GENERATED from Pydantic models, never hand-written
+- Generation runs as a build step (`scripts/generate_ts_types.py`), not manually
+- API client imports from generated types only (`apps/web/src/types/`)
+- Regenerate types after any contract model change — CI enforces this
+
+## Backend Validation
+- Route handlers validate input against contract models (Pydantic)
+- Use `Body()`, `Query()`, `Path()` with Pydantic model types for automatic validation
+- Return contract-defined response models from all endpoints
+- Error responses follow the standard shape: `{"error": str, "code": str, "detail": any}`
+
+## Frontend Consumption
+- API client code lives in `apps/web/src/lib/apiClient.ts`
+- All API calls use generated types for request params and response parsing
+- No `any` types for API responses — always typed from contracts
+- Handle error responses with typed error classification
+
+## Versioning
+- Contract models support additive changes (new optional fields) without breaking consumers
+- Breaking changes require a new model version and migration path
+- Schema backward compatibility is tested at the package level

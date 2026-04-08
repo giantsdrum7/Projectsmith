@@ -3,29 +3,53 @@ description: API patterns, Lambda/ECS conventions, request handling
 globs: "src/**/api/**"
 ---
 
-# FUTURE — This rule activates when src/**/api/ contains API endpoint code. Not yet applicable at scaffold time.
-
 # Backend Standards
 
-## API Design
-- Use RESTful conventions for CRUD endpoints
-- Return consistent error response format: {"error": str, "code": str, "detail": any}
-- Include request_id in all responses for tracing
-- Validate all input with Pydantic models
+## FastAPI + Lambda
+- Mangum adapter wraps the FastAPI app for Lambda execution (`handler.py`)
+- Keep handler entry points thin — delegate to service layer functions
+- Cold start budget: <2s for API handlers; minimize top-level imports
+- Use `/tmp` filesystem for transient data in Lambda (ephemeral, 512MB default)
+- No global mutable state in Lambda handlers — each invocation may reuse or create a container
 
-## Lambda Patterns
-- Keep handler functions thin — delegate to service layer
-- Use structured logging (JSON format)
-- Read config from Secrets Manager via pointer pattern
-- Cold start budget: <2s for API handlers
+## Request/Response Validation
+- Pydantic v2 models for all request bodies and response shapes
+- Define models in `packages/contracts/`, import into route handlers
+- Return consistent error response format: `{"error": str, "code": str, "detail": any}`
+- Include `request_id` in all responses for tracing
 
 ## Error Handling
-- Map domain exceptions to HTTP status codes
+- Use `HTTPException` with typed error codes for expected errors
+- Map domain exceptions to HTTP status codes in exception handlers
 - Never expose internal error details to clients
-- Log full stack traces server-side
+- Log full stack traces server-side with structured logging
 - Return 5xx for unexpected errors, 4xx for client errors
 
 ## Authentication
-- Validate JWT tokens from Cognito (when enabled)
+- `get_current_user` dependency injection on all protected routes
+- Validate JWT tokens from Cognito — deny-by-default on empty/missing groups
+- Never trust client-provided user IDs — extract from token claims
 - Use middleware for auth, not per-handler logic
-- Never trust client-provided user IDs — extract from token
+- OFFLINE mode returns a synthetic test user (no network call)
+
+## Lambda Powertools
+- Logger: structured JSON logs with correlation IDs (execution_id, tenant_id, request_id)
+- Tracer: X-Ray active tracing on all Lambda functions
+- Metrics: CloudWatch EMF custom metrics (latency, error rates, token usage)
+- Graceful degradation: if Powertools not available (local dev), fall back to stdlib logging
+
+## Mode-Aware Behavior
+- Check `AppMode` via `get_current_mode()` before making external calls
+- OFFLINE: use stubs, return mock data, skip all network calls
+- LOCAL_LIVE: real AWS calls against dev resources
+- PROD: full production behavior, never set locally without explicit override
+
+## Dependency Injection
+- `@lru_cache` singletons for expensive clients (DynamoDB, Bedrock, S3)
+- `reset_for_testing()` clears all caches — call in test fixtures
+- Declare dependencies via FastAPI `Depends()` for testability
+
+## API Design
+- Use RESTful conventions for CRUD endpoints
+- Read config from Secrets Manager via pointer pattern
+- CORS origins configurable via `API_CORS_ORIGINS` environment variable
