@@ -73,7 +73,7 @@ function Invoke-Check {
     if ($DryRun) {
         $checks[$idx].Status = "PASS"
         Write-CheckStatus -Name $Name -Status "PASS"
-        Write-Host "  (DRY RUN — skipped actual verification)" -ForegroundColor DarkGray
+        Write-Host "  (DRY RUN - skipped actual verification)" -ForegroundColor DarkGray
         return
     }
 
