@@ -1,0 +1,75 @@
+# Projectsmith Template — Current Status
+
+## Packet 1 — Foundation (Copier Vars, Contracts, Docker, CODEOWNERS)
+- **Status:** COMPLETE
+- **Date:** April 2026
+
+---
+
+## Packet 2A — CDK Infrastructure Starters + Deploy
+- **Status:** COMPLETE
+- **Date:** 2026-04-08
+- **What was done:**
+  - Updated copier.yaml `_exclude` patterns: added `scripts/deploy` and `deploy-backend.yml` conditionals gated on `include_infra`
+  - Created CDK app entry point (`infra/cdk/app.py`) with per-client parameterization via `--context client=X --context env=Y`
+  - Created 7 CDK stack starters:
+    - `data_stack.py` — DynamoDB single table with GSI1-4 (tenant, user+status, parent-child, MCP), S3 artifacts/prompts buckets, KMS key
+    - `auth_stack.py` — Cognito User Pool with custom:tenant_id, app client with OAuth, user groups (proposal_author, reviewer, admin)
+    - `api_stack.py` — API Gateway REST API, Lambda handler (PowertoolsFunction), Lambda authorizer (JWT validation placeholder), /health and /v1 endpoints
+    - `orchestration_stack.py` — Step Functions shell state machines (proposal-pipeline, document-pipeline) with Pass state placeholders, IAM roles
+    - `frontend_stack.py` — S3 frontend bucket, S3 config bucket, CloudFront distribution with OAC and SPA error responses
+    - `search_stack.py` — Bedrock KB / OpenSearch Serverless placeholder with IAM roles, config-driven backend choice
+    - `iam_stack.py` — GitHub Actions OIDC provider, deploy role (least-privilege, namespace-scoped), region-deny with Bedrock NotAction, Lambda/SFN execution roles
+  - Created 3 reusable CDK constructs:
+    - `lambda_function.py` — PowertoolsFunction L3 construct (Powertools env vars, X-Ray tracing, standard tags)
+    - `monitored_table.py` — MonitoredTable construct (DynamoDB table + throttle/system-error alarms)
+    - `appconfig_feature_flags.py` — AppConfig Application + Environment + Configuration Profile + linear 20%/10min deployment strategy
+  - Created example client config JSON (`config/example.json`) with Copier variable substitution for deployment_namespace and aws_region
+  - Created CDK support files: `cdk.json`, `requirements.txt`, `__init__.py` files
+  - Created `deploy-backend.yml` workflow (OIDC auth, CDK deploy, post-deploy verification)
+  - Created `post-deploy-verify.ps1` and `post-deploy-verify.sh` with phase-state output (NOT_RUN → RUNNING → PASS/FAIL)
+  - Deleted `.gitkeep` from `infra/` and `scripts/deploy/` (replaced by real content)
+  - Handled `constructs/` directory namespace collision with CDK `constructs` pip package via `__init__.py` delegation
+- **Files changed:**
+  - EDITED: `copier.yaml` (added 2 `_exclude` patterns)
+  - DELETED: `template/{{project_slug}}/infra/.gitkeep`
+  - DELETED: `template/{{project_slug}}/scripts/deploy/.gitkeep`
+  - CREATED: `template/{{project_slug}}/infra/cdk/app.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/__init__.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/cdk.json`
+  - CREATED: `template/{{project_slug}}/infra/cdk/requirements.txt`
+  - CREATED: `template/{{project_slug}}/infra/cdk/config/example.json`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/__init__.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/data_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/auth_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/api_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/orchestration_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/frontend_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/search_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/iam_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/constructs/__init__.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/constructs/lambda_function.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/constructs/monitored_table.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/constructs/appconfig_feature_flags.py`
+  - CREATED: `template/{{project_slug}}/.github/workflows/deploy-backend.yml`
+  - CREATED: `template/{{project_slug}}/scripts/deploy/post-deploy-verify.ps1`
+  - CREATED: `template/{{project_slug}}/scripts/deploy/post-deploy-verify.sh`
+- **Ownership surfaces touched:** template-managed (all CDK, workflow, and deploy script files)
+- **Verification results:**
+  - copier copy (infra=true): **PASS** — all CDK files generated, no .gitkeep remnants, deployment_namespace substituted correctly in example.json
+  - copier copy (infra=false): **PASS** — infra/cdk/ excluded, scripts/deploy/ excluded, deploy-backend.yml excluded
+  - cdk synth: **PASS** — all 7 stacks synthesized (data, auth, api, orchestration, frontend, search, iam). Deprecation warnings only (pointInTimeRecovery, logRetention).
+  - GSI4 present: **PASS** — GSI4 defined in data_stack.py with GSI4PK/GSI4SK for MCP server→tool queries
+  - deploy verify script (DryRun): **PASS** — 6/6 checks pass, phase-state output correct
+  - deploy workflow YAML: **PASS** — valid YAML
+  - existing tests (contracts): **PASS** — 4/4 tests pass
+  - verify-fast: **PARTIAL** — ruff lint PASS, ruff format PASS, mypy FAIL (pre-existing issue in scripts/env/generate_env_templates.py from Packet 1, not caused by Packet 2A changes)
+- **Decisions made:**
+  - Added `cdk.json` to CDK directory (not in original spec but required for `cdk synth` to find the app)
+  - `constructs/` directory uses `__init__.py` delegation to resolve namespace collision with CDK `constructs` pip package
+  - Namespace sanitization (underscore → hyphen) happens in `app.py` for AWS resource naming safety
+  - Copier verification requires `--vcs-ref HEAD` since template is in a git repo; tagged version (v0.1.0) predates Packet 2A changes
+- **Open issues:**
+  - CDK deprecation warnings: `pointInTimeRecovery` → `pointInTimeRecoverySpecification`, `logRetention` → `logGroup` (non-blocking, can be addressed in a future pass)
+  - Pre-existing mypy error in `scripts/env/generate_env_templates.py:27` (Packet 1 issue, not Packet 2A)
+- **Next recommended packet:** Packet 2B — FastAPI Shell + Backend Rules + Integration Harness
