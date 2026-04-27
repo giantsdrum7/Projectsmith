@@ -10,6 +10,8 @@ _exclude:
   - "{% if not include_infra %}infra{% endif %}"
   - "{% if not include_infra %}**/scripts/deploy{% endif %}"
   - "{% if not include_infra %}**/.github/workflows/deploy-backend.yml{% endif %}"
+  - "{% if metadata_store != 'dynamodb' %}**/tests/integration/helpers/dynamodb.py{% endif %}"
+  - "{% if metadata_store != 'dynamodb' %}**/infra/cdk/constructs/monitored_table.py{% endif %}"
   - "{% if not include_observability %}observability{% endif %}"
   - "{% if not include_security %}security{% endif %}"
   - "{% if not include_evals %}evals{% endif %}"
@@ -87,12 +89,12 @@ claude_code_model:
 
 metadata_store:
   type: str
-  help: "Primary metadata store"
+  help: "Primary metadata store. PostgreSQL means Aurora PostgreSQL Serverless v2 + RDS Data API is recommended; standard RDS PostgreSQL is also supported with connection pooling, but RDS Data API is Aurora-only."
   default: "none"
   choices:
     - "none"
     - "dynamodb"
-    - "rds-postgres"
+    - "postgres"
 
 llm_provider:
   type: str

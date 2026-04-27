@@ -2,6 +2,7 @@
   "client_id": "example",
   "deployment_namespace": "{{ deployment_namespace }}",
   "aws_region": "{{ aws_region }}",
+  "metadata_store": "{{ metadata_store }}",
   "cognito": {
     "allowed_domains": ["@example.com"],
     "callback_urls": ["http://localhost:5173/callback"],

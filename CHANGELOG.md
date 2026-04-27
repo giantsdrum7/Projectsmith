@@ -2,6 +2,27 @@
 
 All notable changes to Projectsmith will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- Renamed the `metadata_store` Copier option from `rds-postgres` to `postgres` for clarity.
+- Clarified `metadata_store` help text: RDS Data API is Aurora-only; standard RDS PostgreSQL requires connection pooling and cannot use Data API.
+
+### Fixed
+
+- Fixed `metadata_store` propagation into generated scaffold files. Previously, generated projects emitted DynamoDB/OpenSearch env vars, docs, and IaC unconditionally regardless of the selected `metadata_store` value.
+- Generated `env_spec.py`, `.env.example`, `mode_defaults.json`, `ENV_VARS.md`, `START_HERE.md`, `AGENTS.md`, Cursor rules, `deps.py`, `Dockerfile`, `docker-compose.yml`, integration tests, `pyproject.toml` extras, CDK stacks, deploy verification, and security/contract docs now branch on `metadata_store`.
+
+### Added
+
+- Added a `postgres` preset to `scripts/dev/validate-template.ps1`.
+
+### Deferred
+
+- First-class Aurora CDK provisioning remains intentionally deferred; the scaffold documents the recommended posture but does not add VPC/RDS/migration resources.
+- `postgres` validation in other harnesses beyond `scripts/dev/validate-template.ps1` remains deferred.
+
 ## [v0.1.0] — 2026-03-15
 
 ### Initial Release

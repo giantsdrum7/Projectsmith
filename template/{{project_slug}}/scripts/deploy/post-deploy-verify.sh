@@ -73,6 +73,7 @@ check_api_gateway() {
     echo "  Found API: ${NAMESPACE}-api (id: $api_id)"
 }
 
+{% if metadata_store == "dynamodb" %}
 check_dynamodb_table() {
     local status
     status=$(aws dynamodb describe-table \
@@ -83,6 +84,7 @@ check_dynamodb_table() {
     [[ "$status" == "ACTIVE" ]]
     echo "  Table: ${NAMESPACE}-platform (status: $status)"
 }
+{% endif %}
 
 check_cognito_pool() {
     local pool_id
@@ -112,7 +114,9 @@ if [[ "$DRY_RUN" == "true" ]]; then echo "Mode:      DRY RUN"; fi
 echo ""
 
 run_check "API Gateway Health" check_api_gateway
+{% if metadata_store == "dynamodb" %}
 run_check "DynamoDB Table" check_dynamodb_table
+{% endif %}
 run_check "Cognito User Pool" check_cognito_pool
 run_check "S3 Artifacts Bucket" check_s3_bucket "${NAMESPACE}-artifacts"
 run_check "S3 Frontend Bucket" check_s3_bucket "${NAMESPACE}-frontend"

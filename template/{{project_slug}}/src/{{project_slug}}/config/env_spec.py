@@ -17,7 +17,9 @@ class Category(enum.StrEnum):
 
     MODE = "mode"
     AWS = "aws"
+    METADATA = "metadata"
     BEDROCK = "bedrock"
+    POSTGRES = "postgres"
     S3 = "s3"
     SECRETS = "secrets"
     COGNITO = "cognito"
@@ -78,7 +80,11 @@ ENV_SPEC: tuple[EnvVar, ...] = (
         name="AWS_REGION",
         description="Primary AWS region",
         category=Category.AWS,
-        defaults={Mode.OFFLINE: "{{ aws_region }}", Mode.LOCAL_LIVE: "{{ aws_region }}", Mode.PROD: "{{ aws_region }}"},
+        defaults={
+            Mode.OFFLINE: "{{ aws_region }}",
+            Mode.LOCAL_LIVE: "{{ aws_region }}",
+            Mode.PROD: "{{ aws_region }}",
+        },
     ),
     EnvVar(
         name="AWS_ACCOUNT_ID",
@@ -122,7 +128,19 @@ ENV_SPEC: tuple[EnvVar, ...] = (
         required=False,
         secret=True,
     ),
-    # ── DynamoDB ──────────────────────────────────────────────────────────
+    # ── Metadata Store ────────────────────────────────────────────────────
+    EnvVar(
+        name="METADATA_STORE",
+        description="Primary metadata store selected at project generation",
+        category=Category.METADATA,
+        defaults={
+            Mode.OFFLINE: "{{ metadata_store }}",
+            Mode.LOCAL_LIVE: "{{ metadata_store }}",
+            Mode.PROD: "{{ metadata_store }}",
+        },
+    ),
+{% if metadata_store == "dynamodb" -%}
+{{ "    # ── DynamoDB ──────────────────────────────────────────────────────────" }}
     EnvVar(
         name="DYNAMODB_DOCUMENTS_TABLE",
         description="DynamoDB table for doc-level metadata (ACL, title, active version)",
@@ -178,7 +196,77 @@ ENV_SPEC: tuple[EnvVar, ...] = (
         },
         required=False,
     ),
-    # ── Orchestration ─────────────────────────────────────────────────────
+{% elif metadata_store == "postgres" -%}
+{{ "    # ── PostgreSQL Metadata Store ─────────────────────────────────────────" }}
+    # Recommended: Aurora PostgreSQL Serverless v2 + RDS Data API + pgvector.
+    # RDS Data API is Aurora-only; standard RDS PostgreSQL requires network
+    # connectivity plus connection pooling, for example RDS Proxy or PgBouncer.
+    EnvVar(
+        name="POSTGRES_AURORA_CLUSTER_ARN",
+        description="Aurora PostgreSQL cluster ARN for RDS Data API calls (Aurora only)",
+        category=Category.POSTGRES,
+        defaults={Mode.OFFLINE: "", Mode.LOCAL_LIVE: "REDACTED_ORG_SPECIFIC", Mode.PROD: "REDACTED_ORG_SPECIFIC"},
+        required=False,
+    ),
+    EnvVar(
+        name="POSTGRES_DATA_API_ENABLED",
+        description="Enable RDS Data API mode; only Aurora PostgreSQL supports the Data API",
+        category=Category.POSTGRES,
+        defaults={Mode.OFFLINE: "false", Mode.LOCAL_LIVE: "true", Mode.PROD: "true"},
+    ),
+    EnvVar(
+        name="POSTGRES_SECRET_ARN",
+        description="Secrets Manager ARN containing PostgreSQL credentials",
+        category=Category.POSTGRES,
+        defaults={Mode.OFFLINE: "", Mode.LOCAL_LIVE: "REDACTED_ORG_SPECIFIC", Mode.PROD: "REDACTED_ORG_SPECIFIC"},
+        required=False,
+        secret=True,
+    ),
+    EnvVar(
+        name="POSTGRES_HOST",
+        description="PostgreSQL host for non-Data-API mode (standard RDS or direct Aurora connection)",
+        category=Category.POSTGRES,
+        defaults={
+            Mode.OFFLINE: "localhost",
+            Mode.LOCAL_LIVE: "REDACTED_ORG_SPECIFIC",
+            Mode.PROD: "REDACTED_ORG_SPECIFIC",
+        },
+        required=False,
+    ),
+    EnvVar(
+        name="POSTGRES_PORT",
+        description="PostgreSQL port for non-Data-API mode",
+        category=Category.POSTGRES,
+        defaults={Mode.OFFLINE: "5432", Mode.LOCAL_LIVE: "5432", Mode.PROD: "5432"},
+        required=False,
+    ),
+    EnvVar(
+        name="POSTGRES_DATABASE",
+        description="PostgreSQL database name",
+        category=Category.POSTGRES,
+        defaults={
+            Mode.OFFLINE: "{{ project_slug }}",
+            Mode.LOCAL_LIVE: "{{ project_slug }}",
+            Mode.PROD: "{{ project_slug }}",
+        },
+        required=False,
+    ),
+    EnvVar(
+        name="POSTGRES_USER",
+        description="PostgreSQL username for non-Data-API mode; prefer Secrets Manager in live environments",
+        category=Category.POSTGRES,
+        defaults={Mode.OFFLINE: "{{ project_slug }}", Mode.LOCAL_LIVE: "", Mode.PROD: ""},
+        required=False,
+        secret=True,
+    ),
+    EnvVar(
+        name="POSTGRES_PGVECTOR_ENABLED",
+        description="Enable pgvector-backed embeddings/retrieval in PostgreSQL",
+        category=Category.POSTGRES,
+        defaults={Mode.OFFLINE: "true", Mode.LOCAL_LIVE: "true", Mode.PROD: "true"},
+    ),
+{% endif -%}
+{{ "    # ── Orchestration ─────────────────────────────────────────────────────" }}
     EnvVar(
         name="SFN_INGEST_ARN",
         description="Step Functions state machine ARN for the ingestion pipeline",
@@ -257,7 +345,8 @@ ENV_SPEC: tuple[EnvVar, ...] = (
             Mode.PROD: "amazon.titan-embed-text-v2:0",
         },
     ),
-    # ── OpenSearch Serverless ─────────────────────────────────────────────
+{% if metadata_store == "dynamodb" -%}
+{{ "    # ── OpenSearch Serverless ─────────────────────────────────────────────" }}
     EnvVar(
         name="OPENSEARCH_SEARCH_ENDPOINT",
         description="OpenSearch Serverless search collection endpoint URL",
@@ -284,7 +373,8 @@ ENV_SPEC: tuple[EnvVar, ...] = (
         category=Category.OPENSEARCH,
         defaults={Mode.OFFLINE: "1024", Mode.LOCAL_LIVE: "1024", Mode.PROD: "1024"},
     ),
-    # ── S3 Storage ────────────────────────────────────────────────────────
+{% endif -%}
+{{ "    # ── S3 Storage ────────────────────────────────────────────────────────" }}
     EnvVar(
         name="S3_DATALAKE_BUCKET",
         description="Canonical single-bucket datalake (replaces S3_ARTIFACTS/UPLOADS_BUCKET)",
@@ -327,7 +417,11 @@ ENV_SPEC: tuple[EnvVar, ...] = (
         name="S3_REGION",
         description="AWS region for S3 buckets (may differ from primary region)",
         category=Category.S3,
-        defaults={Mode.OFFLINE: "{{ aws_region }}", Mode.LOCAL_LIVE: "{{ aws_region }}", Mode.PROD: "{{ aws_region }}"},
+        defaults={
+            Mode.OFFLINE: "{{ aws_region }}",
+            Mode.LOCAL_LIVE: "{{ aws_region }}",
+            Mode.PROD: "{{ aws_region }}",
+        },
     ),
     EnvVar(
         name="S3_PRESIGNED_URL_EXPIRY",
@@ -428,7 +522,11 @@ ENV_SPEC: tuple[EnvVar, ...] = (
         name="OTEL_SERVICE_NAME",
         description="Service name reported to OpenTelemetry",
         category=Category.LOGGING,
-        defaults={Mode.OFFLINE: "{{ project_slug }}", Mode.LOCAL_LIVE: "{{ project_slug }}", Mode.PROD: "{{ project_slug }}"},
+        defaults={
+            Mode.OFFLINE: "{{ project_slug }}",
+            Mode.LOCAL_LIVE: "{{ project_slug }}",
+            Mode.PROD: "{{ project_slug }}",
+        },
     ),
     EnvVar(
         name="SENTRY_DSN",

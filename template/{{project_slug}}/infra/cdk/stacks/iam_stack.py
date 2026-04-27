@@ -81,7 +81,13 @@ class IamStack(Stack):
                 actions=[
                     "cloudformation:*",
                     "s3:*",
+{% if metadata_store == "dynamodb" %}
                     "dynamodb:*",
+{% elif metadata_store == "postgres" %}
+                    "rds:*",
+                    "rds-data:*",
+                    "secretsmanager:GetSecretValue",
+{% endif %}
                     "lambda:*",
                     "apigateway:*",
                     "cognito-idp:*",
@@ -145,7 +151,7 @@ class IamStack(Stack):
             ],
             description=f"Execution role for {namespace} API Lambda functions",
         )
-        # TODO: Add DynamoDB, S3, Bedrock, AppConfig permissions scoped to namespace resources
+        # TODO: Add {% if metadata_store == "dynamodb" %}DynamoDB{% elif metadata_store == "postgres" %}PostgreSQL/Aurora{% else %}metadata-store{% endif %}, S3, Bedrock, AppConfig permissions scoped to namespace resources
 
         # --- Worker Lambda Execution Role ---
         self.worker_lambda_role = iam.Role(
@@ -163,7 +169,7 @@ class IamStack(Stack):
             ],
             description=f"Execution role for {namespace} worker Lambda functions",
         )
-        # TODO: Add DynamoDB, S3, Bedrock, Step Functions permissions scoped to namespace resources
+        # TODO: Add {% if metadata_store == "dynamodb" %}DynamoDB{% elif metadata_store == "postgres" %}PostgreSQL/Aurora{% else %}metadata-store{% endif %}, S3, Bedrock, Step Functions permissions scoped to namespace resources
 
         # --- Step Functions Execution Role ---
         self.step_functions_role = iam.Role(
@@ -189,6 +195,7 @@ class IamStack(Stack):
                 resources=["*"],
             )
         )
+{% if metadata_store == "dynamodb" %}
         self.step_functions_role.add_to_policy(
             iam.PolicyStatement(
                 sid="AllowDynamoDBAccess",
@@ -207,6 +214,26 @@ class IamStack(Stack):
                 ],
             )
         )
+{% elif metadata_store == "postgres" %}
+        self.step_functions_role.add_to_policy(
+            iam.PolicyStatement(
+                sid="AllowAuroraDataApiAccess",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    "rds-data:BatchExecuteStatement",
+                    "rds-data:BeginTransaction",
+                    "rds-data:CommitTransaction",
+                    "rds-data:ExecuteStatement",
+                    "rds-data:RollbackTransaction",
+                    "secretsmanager:GetSecretValue",
+                ],
+                resources=[
+                    f"arn:aws:rds:{region}:*:cluster:{namespace}-*",
+                    f"arn:aws:secretsmanager:{region}:*:secret:{namespace}-*",
+                ],
+            )
+        )
+{% endif %}
 
         # --- Alarm: Unauthorized Access Attempts ---
         # Uses CloudTrail metrics for access denied events

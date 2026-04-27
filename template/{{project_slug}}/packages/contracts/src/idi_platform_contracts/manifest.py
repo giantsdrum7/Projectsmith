@@ -22,7 +22,14 @@ class ExecutionManifest(BaseModel):
     """Base execution manifest — the core runtime object for all task types.
 
     Every top-level execution and delegated child task creates an instance.
+{% if metadata_store == "dynamodb" %}
     DynamoDB single-table design: META/STATUS/OUTPUT items per execution.
+{% elif metadata_store == "postgres" %}
+    PostgreSQL design: persist execution metadata/status/output with tenant-scoped
+    rows and transactional status transitions.
+{% else %}
+    Persistence design is project-specific because no metadata store was scaffolded.
+{% endif %}
     """
 
     model_config = {"extra": "ignore"}

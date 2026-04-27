@@ -15,13 +15,13 @@ All secrets are stored in AWS-managed services. **No secrets in source code, `.e
 | **Cognito app client secret** | Not used (offline stub) | SSM Parameter Store | AWS Secrets Manager | Rotated via Cognito |
 | **LLM API keys (if OpenAI)** | Dummy key in mode defaults | SSM Parameter Store | AWS Secrets Manager | Manual rotation (90-day) |
 | **Bedrock access** | N/A (offline stub) | IAM role (no key) | IAM role (no key) | IAM role-based, no secret |
-| **S3 / DynamoDB access** | LocalStack / DDB Local | IAM role | IAM role | IAM role-based, no secret |
+| **S3 / metadata-store access** | {% if metadata_store == "dynamodb" %}LocalStack / DDB Local{% elif metadata_store == "postgres" %}Local PostgreSQL / pgvector{% else %}Project-specific local default{% endif %} | IAM role{% if metadata_store == "postgres" %} or Secrets Manager database credentials{% endif %} | IAM role{% if metadata_store == "postgres" %} or Secrets Manager database credentials{% endif %} | {% if metadata_store == "postgres" %}Aurora Data API uses IAM + secret ARN; standard RDS PostgreSQL uses rotated DB credentials{% else %}IAM role-based, no secret{% endif %} |
 | **GitHub Actions deploy** | N/A | N/A | OIDC federation | No static credentials |
 | **Third-party webhook secrets** | Dummy value | SSM Parameter Store | AWS Secrets Manager | Manual rotation (90-day) |
 | **Encryption keys (KMS)** | N/A (no encryption offline) | AWS-managed KMS key | CMK with alias | Automatic annual rotation |
 | **JWT signing key** | Hardcoded test key | Cognito-managed | Cognito-managed | Cognito rotation |
 
-**Key principle:** IAM roles are preferred over credential-based access for all AWS services. Bedrock, S3, DynamoDB, Step Functions, and Lambda use role-based access exclusively — no API keys.
+**Key principle:** IAM roles are preferred over credential-based access for AWS services. Bedrock, S3, {% if metadata_store == "dynamodb" %}DynamoDB{% elif metadata_store == "postgres" %}Aurora RDS Data API{% else %}the selected metadata service{% endif %}, Step Functions, and Lambda should use least-privilege role-based access where supported. {% if metadata_store == "postgres" %}RDS Data API is Aurora-only; standard RDS PostgreSQL still needs rotated database credentials and connection pooling.{% endif %}
 
 ---
 

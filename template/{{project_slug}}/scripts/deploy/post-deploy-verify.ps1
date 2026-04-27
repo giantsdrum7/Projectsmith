@@ -7,7 +7,7 @@
     accessible and healthy. Each check uses phase-state output:
     NOT_RUN -> RUNNING -> PASS/FAIL.
 
-    Checks: API Gateway health, DynamoDB table, Cognito pool, S3 buckets,
+    Checks: API Gateway health, {% if metadata_store == "dynamodb" %}DynamoDB table, {% endif %}Cognito pool, S3 buckets,
     AppConfig application.
 
 .PARAMETER Namespace
@@ -38,7 +38,9 @@ $ErrorActionPreference = "Stop"
 
 $checks = @(
     @{ Name = "API Gateway Health"; Status = "NOT_RUN" },
+{% if metadata_store == "dynamodb" %}
     @{ Name = "DynamoDB Table"; Status = "NOT_RUN" },
+{% endif %}
     @{ Name = "Cognito User Pool"; Status = "NOT_RUN" },
     @{ Name = "S3 Artifacts Bucket"; Status = "NOT_RUN" },
     @{ Name = "S3 Frontend Bucket"; Status = "NOT_RUN" },
@@ -103,6 +105,7 @@ Invoke-Check -Name "API Gateway Health" -Check {
     Write-Host "  Found API: $($api.name) (id: $($api.id))" -ForegroundColor DarkGray
 }
 
+{% if metadata_store == "dynamodb" %}
 # --- Check: DynamoDB Table ---
 Invoke-Check -Name "DynamoDB Table" -Check {
     $table = aws dynamodb describe-table `
@@ -113,6 +116,7 @@ Invoke-Check -Name "DynamoDB Table" -Check {
     if ($status -ne "ACTIVE") { throw "Table status is '$status', expected 'ACTIVE'" }
     Write-Host "  Table: $Namespace-platform (status: $status)" -ForegroundColor DarkGray
 }
+{% endif %}
 
 # --- Check: Cognito User Pool ---
 Invoke-Check -Name "Cognito User Pool" -Check {

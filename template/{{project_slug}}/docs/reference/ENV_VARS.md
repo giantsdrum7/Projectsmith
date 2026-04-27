@@ -1,6 +1,6 @@
 # Environment Variables — {{ project_name }}
 
-> Source of truth: `src/{{ project_slug }}/config/env_spec.py` (73 variables, 13 categories).
+> Source of truth: `src/{{ project_slug }}/config/env_spec.py` (variable count depends on Copier options).
 > Generated scaffold assets: `scripts/env/mode_defaults.json`, `.env.example`.
 
 ## Generated vs Hand-Edited Contract
@@ -44,7 +44,16 @@
 
 ---
 
-## DynamoDB (6 variables)
+## Metadata Store
+
+| Variable | Description | Offline | Local-live | Prod |
+|---|---|---|---|---|
+| `METADATA_STORE` | Primary metadata store selected at project generation | `{{ metadata_store }}` | `{{ metadata_store }}` | `{{ metadata_store }}` |
+
+{% if metadata_store == "dynamodb" %}
+---
+
+## DynamoDB (5 variables)
 
 | Variable | Description | Offline | Local-live | Prod |
 |---|---|---|---|---|
@@ -53,6 +62,40 @@
 | `DYNAMODB_JOBS_TABLE` | Ingestion jobs | `""` | `{{ project_slug }}-IngestJobs-dev` | `{{ project_slug }}-IngestJobs-prod` |
 | `DYNAMODB_REVIEW_TABLE` | Review tasks (contradiction/supersession) | `""` | `{{ project_slug }}-ReviewTasks-dev` | `{{ project_slug }}-ReviewTasks-prod` |
 | `DYNAMODB_MANIFESTS_TABLE` | Answer manifests (provenance audit) | `""` | `{{ project_slug }}-AnswerManifests-dev` | `{{ project_slug }}-AnswerManifests-prod` |
+
+{% elif metadata_store == "postgres" %}
+---
+
+## PostgreSQL Metadata Store (8 variables)
+
+Recommended posture: **Aurora PostgreSQL Serverless v2 + RDS Data API + pgvector**.
+Fallback posture: **standard RDS PostgreSQL + connection pooling** (RDS Proxy or PgBouncer). RDS Data API is **Aurora-only** and is not supported by standard RDS PostgreSQL.
+
+| Variable | Description | Offline | Local-live | Prod | Secret |
+|---|---|---|---|---|---|
+| `POSTGRES_AURORA_CLUSTER_ARN` | Aurora cluster ARN for RDS Data API calls | `""` | `REDACTED` | `REDACTED` | — |
+| `POSTGRES_DATA_API_ENABLED` | Enable RDS Data API mode (Aurora-only) | `false` | `true` | `true` | — |
+| `POSTGRES_SECRET_ARN` | Secrets Manager ARN for PostgreSQL credentials | `""` | `REDACTED` | `REDACTED` | Yes |
+| `POSTGRES_HOST` | Host for non-Data-API mode | `localhost` | `REDACTED` | `REDACTED` | — |
+| `POSTGRES_PORT` | Port for non-Data-API mode | `5432` | `5432` | `5432` | — |
+| `POSTGRES_DATABASE` | Database name | `{{ project_slug }}` | `{{ project_slug }}` | `{{ project_slug }}` | — |
+| `POSTGRES_USER` | Username for non-Data-API mode | `{{ project_slug }}` | `""` | `""` | Yes |
+| `POSTGRES_PGVECTOR_ENABLED` | Enable pgvector-backed embeddings/retrieval | `true` | `true` | `true` | — |
+
+{% else %}
+---
+
+## Metadata Store Notes
+
+This project was generated with `metadata_store=none`. No managed metadata-store environment variables are scaffolded. Add project-specific variables to `env_spec.py` only after selecting and implementing a persistence layer.
+{% endif %}
+
+---
+
+## Orchestration (1 variable)
+
+| Variable | Description | Offline | Local-live | Prod |
+|---|---|---|---|---|
 | `SFN_INGEST_ARN` | Step Functions state machine ARN | `""` | `REDACTED` | `REDACTED` |
 
 ---
@@ -73,6 +116,7 @@
 
 ---
 
+{% if metadata_store == "dynamodb" %}
 ## OpenSearch Serverless (4 variables)
 
 | Variable | Description | Offline | Local-live | Prod |
@@ -85,6 +129,19 @@
 > **Important:** Store endpoints as bare hostnames (without `https://` prefix) to avoid the double-prefix bug. See `Lessons_Learned/notable.md` 2026-03-07 entry.
 
 ---
+{% elif metadata_store == "postgres" %}
+## Retrieval With PostgreSQL
+
+For PostgreSQL-backed projects, start with pgvector in Aurora PostgreSQL so metadata and vector retrieval share the same operational store. Add OpenSearch or Bedrock Knowledge Bases later only if retrieval evaluation shows the Postgres/pgvector path is insufficient.
+
+---
+{% else %}
+## Retrieval Layer
+
+No retrieval backend is scaffolded for `metadata_store=none`. Document the chosen search/vector service here once the project adds one.
+
+---
+{% endif %}
 
 ## S3 Storage (6 variables)
 

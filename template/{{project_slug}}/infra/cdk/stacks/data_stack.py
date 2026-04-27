@@ -1,4 +1,4 @@
-"""DynamoDB single table, S3 buckets, and KMS encryption key.
+"""{% if metadata_store == "dynamodb" %}DynamoDB single table, S3 buckets, and KMS encryption key.
 
 Resources created:
 - DynamoDB table: {namespace}-platform (single-table design per Group 1 contract)
@@ -19,6 +19,25 @@ Implements:
 - Deliverable 3, Section 2.1 (DynamoDB single-table design)
 - Group 1 Locked Contract, Section 4 (DynamoDB Persistence)
 - Group 1 Locked Contract, Section 9 (CDK Table Definition)
+{% elif metadata_store == "postgres" %}PostgreSQL-oriented data stack starter, S3 buckets, and KMS encryption key.
+
+Resources created:
+- S3 bucket: {namespace}-artifacts (versioned, KMS-encrypted)
+- S3 bucket: {namespace}-prompts (prompt body storage)
+- KMS key: alias/{namespace}-key
+
+Post-generation metadata-store target:
+- Aurora PostgreSQL Serverless v2 + RDS Data API + pgvector is recommended.
+- RDS Data API is Aurora-only. Standard RDS PostgreSQL needs network access
+  and connection pooling, such as RDS Proxy or PgBouncer.
+- Add `aws_rds` resources here once project-specific networking, retention,
+  scaling, and migration ownership are decided.
+{% else %}Data stack starter with S3 buckets and KMS encryption key.
+
+No metadata store is provisioned because this project was generated with
+`metadata_store=none`. Add a data-store-specific construct once the project
+chooses a persistence layer.
+{% endif %}
 """
 
 from __future__ import annotations
@@ -30,17 +49,21 @@ from aws_cdk import (
     RemovalPolicy,
     Stack,
     aws_cloudwatch as cloudwatch,
+{% if metadata_store == "dynamodb" %}
     aws_dynamodb as dynamodb,
+{% endif %}
     aws_kms as kms,
     aws_s3 as s3,
 )
 from constructs import Construct
 
+{% if metadata_store == "dynamodb" %}
 from constructs.monitored_table import MonitoredTable
+{% endif %}
 
 
 class DataStack(Stack):
-    """Core data layer: DynamoDB single table, S3 buckets, KMS key."""
+    """Core data layer for the generated project's selected metadata posture."""
 
     def __init__(
         self,
@@ -62,6 +85,7 @@ class DataStack(Stack):
             enable_key_rotation=True,
         )
 
+{% if metadata_store == "dynamodb" %}
         # --- DynamoDB Single Table ---
         monitored = MonitoredTable(
             self,
@@ -133,6 +157,17 @@ class DataStack(Stack):
             ),
             projection_type=dynamodb.ProjectionType.KEYS_ONLY,
         )
+{% elif metadata_store == "postgres" %}
+        # --- PostgreSQL Metadata Store ---
+        # Recommended target: Aurora PostgreSQL Serverless v2 + RDS Data API + pgvector.
+        # RDS Data API is Aurora-only; standard RDS PostgreSQL needs direct
+        # network access and connection pooling. Add project-specific RDS/VPC
+        # resources after choosing migration and networking ownership.
+        self.table = None
+{% else %}
+        # No metadata store is provisioned for metadata_store=none.
+        self.table = None
+{% endif %}
 
         # --- S3 Artifacts Bucket ---
         self.artifacts_bucket = s3.Bucket(

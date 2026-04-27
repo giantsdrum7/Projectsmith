@@ -45,7 +45,7 @@
 - [x] RAG retrieval corpus is curated and version-controlled (S3 artifacts bucket with versioning enabled)
 - [ ] Document provenance tracking for all ingested corpus material
 - [ ] Periodic retrieval quality evaluation (promptfoo eval suite — evals scaffold provided)
-- [ ] Corpus change audit trail (DynamoDB Streams → S3 archival)
+- [ ] Corpus change audit trail ({% if metadata_store == "dynamodb" %}DynamoDB Streams → S3 archival{% elif metadata_store == "postgres" %}PostgreSQL audit/outbox table → S3 archival{% else %}chosen metadata-store audit log → archival storage{% endif %})
 
 **Architectural reference:** Deliverable 3 §3.4 — retrieval validation gate requires ≥80% recall on curated validation set before KB goes live.
 
@@ -89,7 +89,7 @@
 - [x] Secrets stored in AWS Secrets Manager / SSM Parameter Store — never in code or env vars (see `security/secrets-policy.md`)
 - [x] Structured logging with correlation IDs — no raw user data in logs (Lambda Powertools)
 - [ ] Output PII scanning before returning responses to users
-- [ ] Data classification labels on DynamoDB items and S3 objects
+- [ ] Data classification labels on {% if metadata_store == "dynamodb" %}DynamoDB items{% elif metadata_store == "postgres" %}PostgreSQL rows/tables{% else %}metadata records{% endif %} and S3 objects
 - [ ] Redaction of internal system paths and stack traces from user-facing errors
 
 **Architectural reference:** Deliverable 3 §2.6 — all log entries are structured JSON. Tenant isolation via `custom:tenant_id` Cognito claim prevents cross-tenant data leakage.
@@ -102,7 +102,7 @@
 
 - [x] Capability bundle authorization — tools granted per-role, per-tenant (Group 3 `ToolGrant` with trust tiers)
 - [x] Fail-closed tool resolution — if bundle resolution fails, `allowed_tools` is empty (Deliverable 3 §2.4)
-- [x] Tool call audit trail — every tool invocation logged with input hash, output summary, cost (DynamoDB audit records)
+- [x] Tool call audit trail — every tool invocation logged with input hash, output summary, cost ({% if metadata_store == "dynamodb" %}DynamoDB audit records{% elif metadata_store == "postgres" %}PostgreSQL audit records{% else %}metadata-store-neutral audit contract{% endif %})
 - [ ] Per-tool input schema validation at invocation time
 - [ ] Tool execution sandboxing (separate Lambda per tool category)
 - [ ] Rate limiting per tool per user session

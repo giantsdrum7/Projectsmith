@@ -69,7 +69,13 @@ If verification passes (`VERIFY: PASS`), your environment is ready.
 | Mode | AWS Calls | Set via |
 |------|-----------|---------|
 | `offline` | None — stub LLM/retrieval | `. ./scripts/env/use-env.ps1 -Mode offline` |
+{% if metadata_store == "dynamodb" %}
 | `local-live` | Real Bedrock + DynamoDB + OpenSearch | `. ./scripts/env/use-env.ps1 -Mode local-live` |
+{% elif metadata_store == "postgres" %}
+| `local-live` | Real Bedrock + Aurora PostgreSQL/pgvector (Data API recommended) | `. ./scripts/env/use-env.ps1 -Mode local-live` |
+{% else %}
+| `local-live` | Real provider calls for services you configure | `. ./scripts/env/use-env.ps1 -Mode local-live` |
+{% endif %}
 | `prod` | CI/CD only — never set locally | CI/CD pipeline |
 
 > **Important:** Dot-source the env script (`. ./scripts/env/use-env.ps1`) — running it as a subprocess does not persist environment variables.

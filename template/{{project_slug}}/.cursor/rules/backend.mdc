@@ -45,7 +45,7 @@ globs: "src/**/api/**"
 - PROD: full production behavior, never set locally without explicit override
 
 ## Dependency Injection
-- `@lru_cache` singletons for expensive clients (DynamoDB, Bedrock, S3)
+- `@lru_cache` singletons for expensive clients ({% if metadata_store == "dynamodb" %}DynamoDB{% elif metadata_store == "postgres" %}PostgreSQL/Aurora Data API{% else %}configured data stores{% endif %}, Bedrock, S3)
 - `reset_for_testing()` clears all caches — call in test fixtures
 - Declare dependencies via FastAPI `Depends()` for testability
 

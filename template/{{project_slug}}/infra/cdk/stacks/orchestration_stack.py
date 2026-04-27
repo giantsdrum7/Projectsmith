@@ -6,7 +6,7 @@ SHELL ONLY — no concrete state machine definitions. State machine logic
 Resources created:
 - Step Functions state machine: {namespace}-proposal-pipeline (placeholder Pass state)
 - Step Functions state machine: {namespace}-document-pipeline (placeholder Pass state)
-- IAM roles for state machine execution (Lambda invoke, Bedrock invoke, DynamoDB access)
+- IAM roles for state machine execution (Lambda invoke, Bedrock invoke, {% if metadata_store == "dynamodb" %}DynamoDB access{% elif metadata_store == "postgres" %}Aurora Data API access{% else %}metadata-store access to add post-generation{% endif %})
 
 Alarms (owned by this stack):
 - Execution failure rate
@@ -75,6 +75,7 @@ class OrchestrationStack(Stack):
                 resources=["*"],
             )
         )
+{% if metadata_store == "dynamodb" %}
         self.execution_role.add_to_policy(
             iam.PolicyStatement(
                 sid="DynamoDBAccess",
@@ -92,6 +93,26 @@ class OrchestrationStack(Stack):
                 ],
             )
         )
+{% elif metadata_store == "postgres" %}
+        self.execution_role.add_to_policy(
+            iam.PolicyStatement(
+                sid="AuroraDataApiAccess",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    "rds-data:BatchExecuteStatement",
+                    "rds-data:BeginTransaction",
+                    "rds-data:CommitTransaction",
+                    "rds-data:ExecuteStatement",
+                    "rds-data:RollbackTransaction",
+                    "secretsmanager:GetSecretValue",
+                ],
+                resources=[
+                    f"arn:aws:rds:{region}:*:cluster:{namespace}-*",
+                    f"arn:aws:secretsmanager:{region}:*:secret:{namespace}-*",
+                ],
+            )
+        )
+{% endif %}
 
         # --- Proposal Pipeline (placeholder) ---
         # TODO: Add concrete state machine definitions post-generation (Group 2 proposal DAG)
@@ -119,7 +140,7 @@ class OrchestrationStack(Stack):
 
         # --- Document Pipeline (placeholder) ---
         # TODO: Add concrete state machine definitions post-generation (document processing)
-        # The document pipeline implements: extract → embed → store in KB/OpenSearch.
+        # The document pipeline implements: extract → embed → store in {% if metadata_store == "postgres" %}PostgreSQL/pgvector{% elif metadata_store == "dynamodb" %}KB/OpenSearch{% else %}the chosen retrieval backend{% endif %}.
         document_placeholder = sfn.Pass(
             self,
             "DocumentPlaceholder",

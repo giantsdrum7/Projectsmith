@@ -5,7 +5,7 @@
 #
 # 3-mode contract compatibility:
 #   - offline:    Not typically containerized (local dev with mocks)
-#   - local-live: Run via docker-compose with DynamoDB Local and real AWS credentials
+#   - local-live: {% if metadata_store == "dynamodb" %}Run via docker-compose with DynamoDB Local and real AWS credentials{% elif metadata_store == "postgres" %}Run against local PostgreSQL or live Aurora/PostgreSQL dev resources{% else %}Run with real credentials only for services this project configures{% endif %}
 #   - prod:       Deployed as Lambda container image via CDK/ECR
 #
 # Customize per project: add COPY lines for additional source directories,

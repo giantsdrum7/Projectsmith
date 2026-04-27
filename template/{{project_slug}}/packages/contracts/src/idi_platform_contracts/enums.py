@@ -26,7 +26,13 @@ class ExecutionStatus(str, Enum):
     """Manifest-level execution statuses (Group 1 locked contract).
 
     Terminal statuses: succeeded, failed, cancelled, timed_out.
+{% if metadata_store == "dynamodb" %}
     All status transitions use DynamoDB condition expressions.
+{% elif metadata_store == "postgres" %}
+    All status transitions should use PostgreSQL transactions or compare-and-swap updates.
+{% else %}
+    Define atomic status-transition rules when the project selects a metadata store.
+{% endif %}
     """
 
     pending = "pending"

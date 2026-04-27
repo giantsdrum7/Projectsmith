@@ -17,7 +17,7 @@ This file indexes `.cursor/rules/*.mdc` modules. See **AGENTS.md** for universal
 | `llm-routing.mdc` | `globs: src/**/llm/**` | LLM provider selection, fallback logic, model configuration |
 | `backend.mdc` | `globs: src/**/api/**` | FastAPI Lambda patterns, Mangum adapter, Pydantic validation, auth, Powertools |
 | `cdk.mdc` | `globs: infra/**` | CDK conventions: stack naming, construct patterns, IAM least-privilege, alarms |
-| `data-access.mdc` | `globs: src/**/tools/**, src/**/api/**, src/**/orchestration/**` | DynamoDB access patterns, tenant isolation, atomic operations, GSI usage |
+| `data-access.mdc` | `globs: src/**/tools/**, src/**/api/**, src/**/orchestration/**` | {% if metadata_store == "dynamodb" %}DynamoDB access patterns, tenant isolation, atomic operations, GSI usage{% elif metadata_store == "postgres" %}PostgreSQL/pgvector access patterns, tenant isolation, transactions, retry rules{% else %}Metadata-store access patterns once a persistence layer is chosen{% endif %} |
 | `api-contract.mdc` | `globs: src/**/api/**, apps/web/src/lib/**, packages/**` | Shared contract discipline, type generation, API shape ownership |
 | `frontend.mdc` | `globs: apps/web/**` | React/Vite patterns, provider composition, config-driven navigation, testing |
 
