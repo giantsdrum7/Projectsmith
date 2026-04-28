@@ -40,6 +40,8 @@ jobs:
               project_description=Minimal preset validation
               github_org=test-org
               github_team_slug=core-team
+              client_id=test
+              environment_tier=dev
               aws_region=us-east-1
               python_version=3.12
               license=MIT
@@ -60,6 +62,8 @@ jobs:
               project_description=AI-core preset validation
               github_org=test-org
               github_team_slug=core-team
+              client_id=test
+              environment_tier=dev
               aws_region=us-east-1
               python_version=3.12
               license=MIT
@@ -80,6 +84,8 @@ jobs:
               project_description=Full-stack preset validation
               github_org=test-org
               github_team_slug=core-team
+              client_id=test
+              environment_tier=dev
               aws_region=us-east-1
               python_version=3.12
               license=MIT
@@ -101,6 +107,8 @@ jobs:
               project_description=E2E preset validation
               github_org=test-org
               github_team_slug=core-team
+              client_id=test
+              environment_tier=dev
               aws_region=us-east-1
               python_version=3.12
               license=MIT
