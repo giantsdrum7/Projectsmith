@@ -9,10 +9,8 @@ from __future__ import annotations
 
 from functools import lru_cache
 from typing import Any
-
-
 {% if metadata_store == "dynamodb" -%}
-@lru_cache
+{{ "\n\n" }}@lru_cache
 def get_dynamodb_resource() -> Any:
     """DynamoDB resource singleton. Respects 3-mode contract."""
     # TODO: Implement with mode-aware endpoint selection
@@ -21,7 +19,7 @@ def get_dynamodb_resource() -> Any:
     # - PROD: boto3.resource("dynamodb")
     pass
 {% elif metadata_store == "postgres" -%}
-@lru_cache
+{{ "\n\n" }}@lru_cache
 def get_postgres_client() -> Any:
     """PostgreSQL client singleton. Respects 3-mode contract."""
     # TODO: Implement with mode-aware endpoint selection.
@@ -32,9 +30,8 @@ def get_postgres_client() -> Any:
     # - LOCAL_LIVE/PROD with POSTGRES_DATA_API_ENABLED=true: use rds-data
     # - LOCAL_LIVE/PROD otherwise: use a pooled PostgreSQL driver connection
     pass
-{% endif %}
-
-@lru_cache
+{% endif -%}
+{{ "\n\n" }}@lru_cache
 def get_s3_client() -> Any:
     """S3 client singleton."""
     # TODO: Implement with mode-aware configuration

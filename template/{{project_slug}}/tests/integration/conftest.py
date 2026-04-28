@@ -11,14 +11,13 @@ import os
 from typing import TYPE_CHECKING, Any
 
 import pytest
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
-
 from fastapi.testclient import TestClient
 
 from {{ project_slug }}.api.app import app
 from {{ project_slug }}.api.deps import reset_for_testing
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 @pytest.fixture(autouse=True)
@@ -33,15 +32,13 @@ def _reset_singletons() -> Generator[None, None, None]:
     reset_for_testing()
     yield
     reset_for_testing()
-
-
 {% if metadata_store == "dynamodb" -%}
-@pytest.fixture(scope="session")
+{{ "\n\n" }}@pytest.fixture(scope="session")
 def dynamodb_endpoint() -> str:
     """DynamoDB Local endpoint URL from environment or default."""
     return os.environ.get("DYNAMODB_ENDPOINT", "http://localhost:8000")
 {% elif metadata_store == "postgres" -%}
-@pytest.fixture(scope="session")
+{{ "\n\n" }}@pytest.fixture(scope="session")
 def postgres_connection_info() -> dict[str, str]:
     """PostgreSQL connection settings from environment or local defaults."""
     return {
@@ -50,9 +47,8 @@ def postgres_connection_info() -> dict[str, str]:
         "database": os.environ.get("POSTGRES_DATABASE", "{{ project_slug }}"),
         "user": os.environ.get("POSTGRES_USER", "{{ project_slug }}"),
     }
-{% endif %}
-
-@pytest.fixture
+{% endif -%}
+{{ "\n\n" }}@pytest.fixture
 def test_tenant_context() -> dict[str, Any]:
     """Test tenant identity and role claims."""
     return {
