@@ -267,8 +267,16 @@ Every archived file should have a banner at the top indicating when it was archi
 ## Architecture Overview
 
 **Key architecture facts agents should know:**
-- **Metadata store:** {% raw %}{{FILL: e.g. DynamoDB, PostgreSQL, Supabase}}{% endraw %}
-- **Retrieval:** {% raw %}{{FILL: retrieval strategy, e.g. OpenSearch hybrid BM25 + vector}}{% endraw %}
+{% if metadata_store == "dynamodb" %}
+- **Metadata store:** DynamoDB (single-table design expected unless the project documents a replacement)
+- **Retrieval:** OpenSearch/Bedrock Knowledge Bases are the default retrieval candidates; document the chosen path in `docs/architecture/ARCHITECTURE.md`.
+{% elif metadata_store == "postgres" %}
+- **Metadata store:** PostgreSQL. Recommended AWS posture is Aurora PostgreSQL Serverless v2 + RDS Data API + pgvector. Standard RDS PostgreSQL is supported only through direct network access and connection pooling; RDS Data API is Aurora-only.
+- **Retrieval:** pgvector in PostgreSQL is the default starting point. Add OpenSearch/Bedrock Knowledge Bases only after retrieval evaluation shows they are needed.
+{% else %}
+- **Metadata store:** None scaffolded. Choose and document a persistence layer before adding metadata-dependent runtime code.
+- **Retrieval:** None scaffolded. Choose and document a search/vector strategy before implementing retrieval.
+{% endif %}
 - **LLM runtime:** AWS Bedrock — configure model IDs in `env_spec.py`. Bedrock inference profile IDs differ from Claude Code model IDs.
 - **Agent tooling model:** `{{ claude_code_model }}` (used in `.claude/settings.json` for Claude Code itself)
 - **Region:** {% raw %}{{FILL: AWS region, e.g. us-east-1}}{% endraw %}

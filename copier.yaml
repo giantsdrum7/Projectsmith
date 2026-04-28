@@ -6,7 +6,12 @@ _templates_suffix: ""
 _exclude:
   - "{% if not include_frontend %}apps{% endif %}"
   - "{% if not include_frontend %}**/frontend.mdc{% endif %}"
+  - "{% if not include_frontend %}**/.github/workflows/deploy-frontend.yml{% endif %}"
   - "{% if not include_infra %}infra{% endif %}"
+  - "{% if not include_infra %}**/scripts/deploy{% endif %}"
+  - "{% if not include_infra %}**/.github/workflows/deploy-backend.yml{% endif %}"
+  - "{% if metadata_store != 'dynamodb' %}**/tests/integration/helpers/dynamodb.py{% endif %}"
+  - "{% if metadata_store != 'dynamodb' %}**/infra/cdk/constructs/monitored_table.py{% endif %}"
   - "{% if not include_observability %}observability{% endif %}"
   - "{% if not include_security %}security{% endif %}"
   - "{% if not include_evals %}evals{% endif %}"
@@ -40,6 +45,24 @@ github_team_slug:
   help: "GitHub team slug for CODEOWNERS (e.g., 'core-team')"
   default: "core-team"
 
+client_id:
+  type: str
+  help: "Per-client identifier (e.g., idi, stevens, hope). Used in resource naming, config paths, tenant_id seeding."
+
+deployment_namespace:
+  type: str
+  default: "{{ project_slug }}-{{ client_id }}-{{ environment_tier }}"
+  help: "AWS resource prefix (e.g., portal-stevens-prod). Used in CDK stack naming, S3 bucket names, DynamoDB table names."
+
+environment_tier:
+  type: str
+  choices:
+    - dev
+    - staging
+    - prod
+  default: dev
+  help: "Deployment environment tier. Distinct from the 3-mode runtime contract (offline/local-live/prod). Controls CDK deployment target naming."
+
 aws_region:
   type: str
   help: "AWS region for all resources"
@@ -66,12 +89,12 @@ claude_code_model:
 
 metadata_store:
   type: str
-  help: "Primary metadata store"
+  help: "Primary metadata store. PostgreSQL means Aurora PostgreSQL Serverless v2 + RDS Data API is recommended; standard RDS PostgreSQL is also supported with connection pooling, but RDS Data API is Aurora-only."
   default: "none"
   choices:
     - "none"
     - "dynamodb"
-    - "rds-postgres"
+    - "postgres"
 
 llm_provider:
   type: str

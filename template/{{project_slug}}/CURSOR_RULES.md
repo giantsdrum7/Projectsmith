@@ -15,12 +15,15 @@ This file indexes `.cursor/rules/*.mdc` modules. See **AGENTS.md** for universal
 | `executor.mdc` | `alwaysApply: true` | Task execution workflow, verification gates, commit discipline |
 | `refactoring.mdc` | `globs: src/**` | Mikado method, safe refactoring patterns, incremental commits |
 | `llm-routing.mdc` | `globs: src/**/llm/**` | LLM provider selection, fallback logic, model configuration |
-| `backend.mdc` | `globs: src/**/api/**` | **FUTURE** — API patterns, Lambda/ECS conventions, request/response schemas |
-| `frontend.mdc` | `globs: apps/web/**` | **FUTURE** — React/Vite patterns, component structure, state management |
+| `backend.mdc` | `globs: src/**/api/**` | FastAPI Lambda patterns, Mangum adapter, Pydantic validation, auth, Powertools |
+| `cdk.mdc` | `globs: infra/**` | CDK conventions: stack naming, construct patterns, IAM least-privilege, alarms |
+| `data-access.mdc` | `globs: src/**/tools/**, src/**/api/**, src/**/orchestration/**` | {% if metadata_store == "dynamodb" %}DynamoDB access patterns, tenant isolation, atomic operations, GSI usage{% elif metadata_store == "postgres" %}PostgreSQL/pgvector access patterns, tenant isolation, transactions, retry rules{% else %}Metadata-store access patterns once a persistence layer is chosen{% endif %} |
+| `api-contract.mdc` | `globs: src/**/api/**, apps/web/src/lib/**, packages/**` | Shared contract discipline, type generation, API shape ownership |
+| `frontend.mdc` | `globs: apps/web/**` | React/Vite patterns, provider composition, config-driven navigation, testing |
 
 > **Important:** Do not set both `alwaysApply: true` and `globs:` on the same rule. `alwaysApply` silently overrides `globs` (undocumented behavior).
 
-> **FUTURE rules:** Rules marked FUTURE target features not present at scaffold time. They activate when matching files are added.
+> **FUTURE rules:** Rules marked FUTURE target features not present at scaffold time. They activate when matching files are added. Rules without the FUTURE tag are active now.
 
 ---
 

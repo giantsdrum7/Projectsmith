@@ -117,6 +117,24 @@ The script generates a project for each preset and checks:
 - `LICENSE` matches the chosen license
 - `.claude/settings.json` has the correct model
 
+### Validating template changes locally
+
+Copier defaults to using the latest Git tag when given a local repository path,
+which means dirty-tree changes may not be picked up. To validate uncommitted
+changes:
+
+- Use `--vcs-ref=HEAD` to test against the current branch:
+
+```powershell
+copier copy <path-to-Projectsmith> ./tmp-test --vcs-ref=HEAD --data ...
+```
+
+For pre-commit dirty-tree validation, copy the working tree to a temporary
+non-Git directory and copier-copy from there.
+
+Always validate against all `metadata_store` values (`postgres`, `dynamodb`,
+`none`) when changes might affect branching.
+
 ## GitHub Actions Validation Workflow
 
 `.github/workflows/validate-template.yml` runs the same checks in CI on every push/PR to `main`. It uses a matrix strategy with four presets:

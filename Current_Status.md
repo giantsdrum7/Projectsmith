@@ -1,0 +1,200 @@
+# Projectsmith Template — Current Status
+
+## Packet 1 — Foundation (Copier Vars, Contracts, Docker, CODEOWNERS)
+- **Status:** COMPLETE
+- **Date:** April 2026
+
+---
+
+## Packet 2A — CDK Infrastructure Starters + Deploy
+- **Status:** COMPLETE
+- **Date:** 2026-04-08
+- **What was done:**
+  - Updated copier.yaml `_exclude` patterns: added `scripts/deploy` and `deploy-backend.yml` conditionals gated on `include_infra`
+  - Created CDK app entry point (`infra/cdk/app.py`) with per-client parameterization via `--context client=X --context env=Y`
+  - Created 7 CDK stack starters:
+    - `data_stack.py` — DynamoDB single table with GSI1-4 (tenant, user+status, parent-child, MCP), S3 artifacts/prompts buckets, KMS key
+    - `auth_stack.py` — Cognito User Pool with custom:tenant_id, app client with OAuth, user groups (proposal_author, reviewer, admin)
+    - `api_stack.py` — API Gateway REST API, Lambda handler (PowertoolsFunction), Lambda authorizer (JWT validation placeholder), /health and /v1 endpoints
+    - `orchestration_stack.py` — Step Functions shell state machines (proposal-pipeline, document-pipeline) with Pass state placeholders, IAM roles
+    - `frontend_stack.py` — S3 frontend bucket, S3 config bucket, CloudFront distribution with OAC and SPA error responses
+    - `search_stack.py` — Bedrock KB / OpenSearch Serverless placeholder with IAM roles, config-driven backend choice
+    - `iam_stack.py` — GitHub Actions OIDC provider, deploy role (least-privilege, namespace-scoped), region-deny with Bedrock NotAction, Lambda/SFN execution roles
+  - Created 3 reusable CDK constructs:
+    - `lambda_function.py` — PowertoolsFunction L3 construct (Powertools env vars, X-Ray tracing, standard tags)
+    - `monitored_table.py` — MonitoredTable construct (DynamoDB table + throttle/system-error alarms)
+    - `appconfig_feature_flags.py` — AppConfig Application + Environment + Configuration Profile + linear 20%/10min deployment strategy
+  - Created example client config JSON (`config/example.json`) with Copier variable substitution for deployment_namespace and aws_region
+  - Created CDK support files: `cdk.json`, `requirements.txt`, `__init__.py` files
+  - Created `deploy-backend.yml` workflow (OIDC auth, CDK deploy, post-deploy verification)
+  - Created `post-deploy-verify.ps1` and `post-deploy-verify.sh` with phase-state output (NOT_RUN → RUNNING → PASS/FAIL)
+  - Deleted `.gitkeep` from `infra/` and `scripts/deploy/` (replaced by real content)
+  - Handled `constructs/` directory namespace collision with CDK `constructs` pip package via `__init__.py` delegation
+- **Files changed:**
+  - EDITED: `copier.yaml` (added 2 `_exclude` patterns)
+  - DELETED: `template/{{project_slug}}/infra/.gitkeep`
+  - DELETED: `template/{{project_slug}}/scripts/deploy/.gitkeep`
+  - CREATED: `template/{{project_slug}}/infra/cdk/app.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/__init__.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/cdk.json`
+  - CREATED: `template/{{project_slug}}/infra/cdk/requirements.txt`
+  - CREATED: `template/{{project_slug}}/infra/cdk/config/example.json`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/__init__.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/data_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/auth_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/api_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/orchestration_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/frontend_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/search_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/stacks/iam_stack.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/constructs/__init__.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/constructs/lambda_function.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/constructs/monitored_table.py`
+  - CREATED: `template/{{project_slug}}/infra/cdk/constructs/appconfig_feature_flags.py`
+  - CREATED: `template/{{project_slug}}/.github/workflows/deploy-backend.yml`
+  - CREATED: `template/{{project_slug}}/scripts/deploy/post-deploy-verify.ps1`
+  - CREATED: `template/{{project_slug}}/scripts/deploy/post-deploy-verify.sh`
+- **Ownership surfaces touched:** template-managed (all CDK, workflow, and deploy script files)
+- **Verification results:**
+  - copier copy (infra=true): **PASS** — all CDK files generated, no .gitkeep remnants, deployment_namespace substituted correctly in example.json
+  - copier copy (infra=false): **PASS** — infra/cdk/ excluded, scripts/deploy/ excluded, deploy-backend.yml excluded
+  - cdk synth: **PASS** — all 7 stacks synthesized (data, auth, api, orchestration, frontend, search, iam). Deprecation warnings only (pointInTimeRecovery, logRetention).
+  - GSI4 present: **PASS** — GSI4 defined in data_stack.py with GSI4PK/GSI4SK for MCP server→tool queries
+  - deploy verify script (DryRun): **PASS** — 6/6 checks pass, phase-state output correct
+  - deploy workflow YAML: **PASS** — valid YAML
+  - existing tests (contracts): **PASS** — 4/4 tests pass
+  - verify-fast: **PARTIAL** — ruff lint PASS, ruff format PASS, mypy FAIL (pre-existing issue in scripts/env/generate_env_templates.py from Packet 1, not caused by Packet 2A changes)
+- **Decisions made:**
+  - Added `cdk.json` to CDK directory (not in original spec but required for `cdk synth` to find the app)
+  - `constructs/` directory uses `__init__.py` delegation to resolve namespace collision with CDK `constructs` pip package
+  - Namespace sanitization (underscore → hyphen) happens in `app.py` for AWS resource naming safety
+  - Copier verification requires `--vcs-ref HEAD` since template is in a git repo; tagged version (v0.1.0) predates Packet 2A changes
+- **Open issues:**
+  - CDK deprecation warnings: `pointInTimeRecovery` → `pointInTimeRecoverySpecification`, `logRetention` → `logGroup` (non-blocking, can be addressed in a future pass)
+  - Pre-existing mypy error in `scripts/env/generate_env_templates.py:27` (Packet 1 issue, not Packet 2A)
+- **Next recommended packet:** Packet 2B — FastAPI Shell + Backend Rules + Integration Harness
+
+---
+
+## Packet 3 — Frontend Starter
+- **Status:** COMPLETE
+- **Date:** 2026-04-08
+- **What was done:**
+  - Updated copier.yaml `_exclude` patterns: added `deploy-frontend.yml` conditional gated on `include_frontend`
+  - Created React/Vite/TS/Tailwind frontend starter (28 files in `apps/web/`)
+  - Created provider chain: QueryClientProvider → AuthProvider → ClientConfigProvider → ThemeProvider → FeatureFlagProvider → App
+  - Created PortalLayout shell (collapsible sidebar + header + content area, config-driven navigation filtered by feature flags)
+  - Created ProtectedRoute (auth check with redirect to /signin, stores return URL)
+  - Created typed API client (`apiClient.ts` — generic only, no endpoint-specific methods, auth token injection, error classification)
+  - Created client-config.json (dev default with Copier variable substitution) + client-config.example.json (fully documented)
+  - Created ClientConfigProvider as single owner of runtime client config (fetches from CDN in prod, local in dev)
+  - Created ThemeProvider consuming config from ClientConfigProvider (applies CSS custom properties to :root)
+  - Created FeatureFlagProvider convenience wrapper (useFeatureFlag, useFeatureFlags hooks)
+  - Created vitest config + test setup + 4 smoke tests (layout renders, nav filtering, config loading, generated types)
+  - Created deploy-frontend.yml workflow (build, S3 sync, CloudFront invalidation)
+  - Expanded frontend.mdc (removed FUTURE banner, added provider composition, config-driven nav, auth/authz boundary, shell-first, testing, accessibility rules)
+  - Updated CURSOR_RULES.md (removed FUTURE marker from frontend.mdc entry)
+  - Updated .gitignore (removed "for future frontend modules" comment)
+  - Deleted apps/web/.gitkeep (replaced by real content)
+  - Generated real TypeScript types from contracts package during verification (2 schema files)
+- **Files changed:**
+  - EDITED: `copier.yaml` (added 1 `_exclude` pattern for `deploy-frontend.yml`)
+  - EDITED: `template/{{project_slug}}/.cursor/rules/frontend.mdc` (expanded from FUTURE stub)
+  - EDITED: `template/{{project_slug}}/CURSOR_RULES.md` (updated frontend.mdc entry)
+  - EDITED: `template/{{project_slug}}/.gitignore` (updated comment)
+  - DELETED: `template/{{project_slug}}/apps/web/.gitkeep`
+  - CREATED: `template/{{project_slug}}/apps/web/package.json`
+  - CREATED: `template/{{project_slug}}/apps/web/vite.config.ts`
+  - CREATED: `template/{{project_slug}}/apps/web/tailwind.config.ts`
+  - CREATED: `template/{{project_slug}}/apps/web/tsconfig.json`
+  - CREATED: `template/{{project_slug}}/apps/web/postcss.config.js`
+  - CREATED: `template/{{project_slug}}/apps/web/index.html`
+  - CREATED: `template/{{project_slug}}/apps/web/vitest.config.ts`
+  - CREATED: `template/{{project_slug}}/apps/web/src/vite-env.d.ts`
+  - CREATED: `template/{{project_slug}}/apps/web/src/index.css`
+  - CREATED: `template/{{project_slug}}/apps/web/src/main.tsx`
+  - CREATED: `template/{{project_slug}}/apps/web/src/App.tsx`
+  - CREATED: `template/{{project_slug}}/apps/web/src/contexts/AuthProvider.tsx`
+  - CREATED: `template/{{project_slug}}/apps/web/src/contexts/ClientConfigProvider.tsx`
+  - CREATED: `template/{{project_slug}}/apps/web/src/contexts/ThemeProvider.tsx`
+  - CREATED: `template/{{project_slug}}/apps/web/src/contexts/FeatureFlagProvider.tsx`
+  - CREATED: `template/{{project_slug}}/apps/web/src/components/PortalLayout.tsx`
+  - CREATED: `template/{{project_slug}}/apps/web/src/components/ProtectedRoute.tsx`
+  - CREATED: `template/{{project_slug}}/apps/web/src/lib/apiClient.ts`
+  - CREATED: `template/{{project_slug}}/apps/web/src/lib/utils.ts`
+  - CREATED: `template/{{project_slug}}/apps/web/src/lib/env.ts`
+  - CREATED: `template/{{project_slug}}/apps/web/src/lib/queryClient.ts`
+  - CREATED: `template/{{project_slug}}/apps/web/src/types/index.ts`
+  - CREATED: `template/{{project_slug}}/apps/web/src/types/generated/README.md`
+  - CREATED: `template/{{project_slug}}/apps/web/public/client-config.json`
+  - CREATED: `template/{{project_slug}}/apps/web/public/client-config.example.json`
+  - CREATED: `template/{{project_slug}}/apps/web/src/__tests__/setup.ts`
+  - CREATED: `template/{{project_slug}}/apps/web/src/__tests__/smoke.test.tsx`
+  - CREATED: `template/{{project_slug}}/.github/workflows/deploy-frontend.yml`
+- **Ownership surfaces touched:** template-managed (all frontend starter files, copier config, cursor rules)
+- **Verification results:**
+  - Node/npm version: Node v24.14.0, npm 11.9.0
+  - copier copy (frontend=true): **PASS** — all 28 frontend files generated, no .gitkeep, no Jinja2 errors, Copier variable substitution correct
+  - copier copy (frontend=false): **PASS** — apps/ absent, deploy-frontend.yml absent, frontend.mdc absent
+  - copier copy (e2e=true): **PASS** — apps/web/e2e/ present with Playwright scaffold (5 files)
+  - npm install: **PASS** — 508 packages installed, no errors
+  - type generation: **PASS** — 2 schema files (ExecutionManifest.schema.json, SampleManifest.schema.json) created in apps/web/src/types/generated/
+  - npm run build: **PASS** — TypeScript compilation (tsc) + Vite build succeeded, 691 modules transformed, output in dist/
+  - npm test: **PASS** — 4/4 tests pass (1 test file, 1.86s) — layout renders, nav filtering, config loads with flags, generated types importable
+  - deploy workflow YAML: **PASS** — valid YAML, parses without error
+  - frontend.mdc: **PASS** — FUTURE banner removed, substantive content (provider composition, config-driven nav, auth/authz boundary, testing, accessibility)
+  - existing backend tests: **PASS** — 4/4 contract tests, 2/2 integration tests pass
+  - verify-fast: **PARTIAL** — ruff lint PASS, ruff format PASS, mypy FAIL (pre-existing issue in scripts/env/generate_env_templates.py from Packet 1, not caused by Packet 3)
+- **Decisions made:**
+  - Avoided JSX double-brace `{{` patterns (Jinja2 conflict) by extracting object literals to variables before JSX — ensures Copier template processing does not mangle TypeScript code
+  - Excluded `src/__tests__/` from `tsconfig.json` compilation to avoid Node.js type conflicts (vitest handles test type checking separately)
+  - Dropped `identityPoolId` from Amplify configure call in AuthProvider starter (optional, can be added post-generation) to avoid Amplify v6 type intersection issue
+  - Type generation pipeline: `generate_ts_types.py` outputs to `packages/contracts/generated/`, files must be copied to `apps/web/src/types/generated/` (the npm script's `--output` flag is aspirational — the Python script doesn't accept it yet)
+  - Added `postcss.config.js` and `src/index.css` (required by Tailwind/Vite but not explicitly in spec file list)
+- **Open issues:**
+  - `generate_ts_types.py` does not accept `--output` flag — the `npm run generate-types` script documents the intended interface but actual execution requires manual copy step. Script update is a Packet 1 follow-up.
+  - `json-schema-to-typescript` not installed globally — only JSON Schema files generated, not `.d.ts` files. Post-generation: `npm install -g json-schema-to-typescript` for full TypeScript type generation.
+  - Pre-existing mypy error in `scripts/env/generate_env_templates.py:27` (Packet 1 issue, not Packet 3)
+- **Next recommended packet:** Packet 4 — Security Content + Epic 0 Validation Gate
+
+---
+
+## Packet 4 — Security Content + Epic 0 Validation Gate
+- **Status:** COMPLETE
+- **Date:** 2026-04-08
+- **What was done:**
+  - Created security/owasp-llm-controls.md (populated OWASP LLM Top 10 with 10 risk categories, per-control status `[x]`/`[ ]` reflecting actual template scaffolding, cross-references to Deliverable 3 architecture decisions)
+  - Created security/redaction-config.yaml (12 PII regex rules covering AWS keys, API keys, emails, phone numbers, SSNs, credit cards, JWTs, connection strings, bearer tokens, private keys, IPv4 addresses; dual-context llm_input/logging flags)
+  - Created security/secrets-policy.md (storage matrix by environment and secret type, rotation schedule, new secret procedure, incident response playbook, CI/CD security requirements)
+  - Deleted security/.gitkeep (replaced by real content)
+  - Fixed pre-existing mypy issue in scripts/env/generate_env_templates.py: replaced `type: ignore` comments with proper `assert` narrowing for `ModuleSpec | None` and `Loader | None` types (lines 26-30)
+  - Fixed Jinja2 template escaping in secrets-policy.md: wrapped `${{ secrets.GITHUB_TOKEN }}` in `{% raw %}...{% endraw %}` to prevent Copier template engine error
+  - Ran full Epic 0 validation gate — ALL CHECKS PASS
+- **Files changed:**
+  - CREATED: `template/{{project_slug}}/security/owasp-llm-controls.md`
+  - CREATED: `template/{{project_slug}}/security/redaction-config.yaml`
+  - CREATED: `template/{{project_slug}}/security/secrets-policy.md`
+  - DELETED: `template/{{project_slug}}/security/.gitkeep`
+  - EDITED: `template/{{project_slug}}/scripts/env/generate_env_templates.py` (mypy fix — assert narrowing instead of type: ignore)
+- **Ownership surfaces touched:** template-managed (security files, env template script)
+- **Epic 0 Validation Gate Results:**
+  - copier copy (all flags incl observability): **PASS** — all files generated, security content present, no errors
+  - security conditional (include_security=false): **PASS** — security/ directory absent
+  - contracts tests: **PASS** — 4/4 tests pass
+  - healthcheck test: **PASS** — 2/2 tests pass
+  - verify-fast: **PASS** — ruff lint PASS, ruff format PASS, mypy PASS (zero failures)
+  - npm install: **PASS** — 508 packages installed
+  - type generation: **PASS** — 2 schema files (ExecutionManifest, SampleManifest)
+  - npm run build: **PASS** — tsc + vite build, 691 modules, dist output
+  - npm test: **PASS** — 4/4 tests pass (requires manual copy of schema files from packages/contracts/generated/ to apps/web/src/types/generated/)
+  - cdk synth: **PASS** — 7 stacks synthesized (data, auth, api, orchestration, frontend, search, iam). Deprecation warnings only.
+  - deploy verify (dry): **PASS** — 6/6 checks pass
+  - security files present + populated: **PASS** — all three files exist with substantive content
+- **Gate verdict:** PASS — ready for Packet 5
+- **Decisions made:**
+  - D13: Mypy fix uses `assert` narrowing instead of `type: ignore` comments — cleaner, more maintainable, and properly narrows types for subsequent usage
+  - D14: Security content files use Copier Jinja2 variables (`{{ project_name }}`, `{{ project_slug }}`) for project-specific substitution, and `{% raw %}...{% endraw %}` blocks for GitHub Actions expressions
+- **Open issues:**
+  - `generate_ts_types.py` still does not accept `--output` flag — schema files generated in `packages/contracts/generated/` must be manually copied to `apps/web/src/types/generated/` for frontend tests. This is a pre-existing Packet 3 issue, not a gate blocker.
+  - CDK deprecation warnings (pointInTimeRecovery, logRetention) — non-blocking, carried forward from Packet 2A
+- **Next recommended packet:** Packet 5 — Generate Real Portal Repo (gate PASSED)

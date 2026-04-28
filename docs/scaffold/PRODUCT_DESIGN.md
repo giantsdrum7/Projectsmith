@@ -108,7 +108,7 @@ Some capabilities exist only in the upstream product (template CI, authoring doc
 
 | Variable | Type | Default | Choices |
 |---|---|---|---|
-| `metadata_store` | choice | `"none"` | none / dynamodb / rds-postgres |
+| `metadata_store` | choice | `"none"` | none / dynamodb / postgres |
 | `llm_provider` | choice | `"none"` | none / bedrock / openai |
 
 **Optional module flags:**

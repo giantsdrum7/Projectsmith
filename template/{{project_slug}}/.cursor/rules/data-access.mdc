@@ -1,0 +1,65 @@
+---
+description: Metadata-store access patterns, tenant isolation, atomic operations
+globs: "src/**/tools/**, src/**/api/**, src/**/orchestration/**"
+---
+
+# Data Access Standards
+
+## Tenant Isolation
+{% if metadata_store == "dynamodb" %}
+- Always include `tenant_id` in DynamoDB partition key design
+- Never query across tenants — all access paths scoped to a single tenant
+- S3 paths include tenant prefix: `s3://{bucket}/{tenant_id}/...`
+
+## Single-Table Design (Three-Item Pattern)
+- **META** item (`SK: META`): write-once configuration, immutable after creation
+- **STATUS** item (`SK: STATUS`): hot mutable fields (status, budget consumed), updated atomically
+- **OUTPUT** item (`SK: OUTPUT`): write-once at completion, immutable after
+- GSI2 lives on the STATUS item so status transitions are single-item atomic updates
+
+## GSI Usage
+- GSI1: `TENANT#{tenantId}` / `EXEC#{created_at}` — tenant-scoped queries (META items)
+- GSI2: `USER#{userId}#STATUS#{status}` / `EXEC#{updated_at}` — user+status queries (STATUS items)
+- GSI3: `PARENT#{parentExecutionId}` / `EXEC#{created_at}` — parent-child traversal (sparse, META items)
+- GSI4: `MCP_SERVER#{serverId}` / `TOOL#{toolId}` — MCP server→tool queries
+
+## Atomic Operations
+- Use `ADD` for budget counter updates (token counts, cost accumulators) — never read-modify-write
+- Use `ConditionExpression` for all status transitions to prevent race conditions
+- Status + GSI2PK updated in a single `UpdateItem` call (atomic)
+
+## Query Safety
+- Never use DynamoDB `Scan` without filters in production code
+- All queries must specify a partition key — no full-table scans
+- Use `Limit` on queries that could return unbounded results
+- Use `ConsistentRead` only when strong consistency is required (prefer eventually consistent)
+
+## Error Handling
+- `ConditionalCheckFailedException` → conflict (HTTP 409), not a retry
+- `ProvisionedThroughputExceededException` → exponential backoff with jitter
+- Always log the full DynamoDB error response for debugging
+{% elif metadata_store == "postgres" %}
+- Every metadata table must include `tenant_id` or be provably global/read-only.
+- Never query across tenants without an explicit cross-tenant administrative use case.
+- S3 paths include tenant prefix: `s3://{bucket}/{tenant_id}/...`
+
+## PostgreSQL Access
+- Default AWS posture: Aurora PostgreSQL Serverless v2 + RDS Data API + pgvector.
+- RDS Data API is Aurora-only. Standard RDS PostgreSQL requires direct network access and connection pooling, such as RDS Proxy or PgBouncer.
+- Keep SQL parameterized; never build SQL by concatenating request input.
+- Use transactions for multi-row state transitions and idempotency keys for retried writes.
+
+## Vector Retrieval
+- Prefer pgvector indexes for the initial retrieval layer.
+- Record embedding model, vector dimensions, and index type near the migration that creates the vector column.
+- Add OpenSearch or Bedrock Knowledge Bases only after retrieval evaluation shows pgvector is insufficient.
+
+## Error Handling
+- Treat serialization/deadlock errors as retryable with bounded exponential backoff.
+- Treat unique/check constraint violations as domain conflicts or validation errors.
+- Never log raw SQL parameters that can contain tenant data or secrets.
+{% else %}
+- No metadata store is scaffolded. Choose a persistence layer before adding metadata-dependent code.
+- S3 paths include tenant prefix when user or tenant artifacts are stored: `s3://{bucket}/{tenant_id}/...`
+- Document tenant isolation, transaction, and retry rules alongside the chosen implementation.
+{% endif %}

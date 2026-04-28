@@ -1,0 +1,133 @@
+# PII Redaction Configuration
+#
+# Regex-driven rules for detecting and redacting sensitive data.
+# Two application contexts:
+#   llm_input: true  — applied before sending content to the LLM provider
+#   logging: true    — applied before writing to CloudWatch / structured logs
+#
+# Each rule produces a named match that redaction middleware replaces with
+# the specified replacement token. Rules are evaluated in order; first match wins
+# for overlapping spans.
+#
+# Post-generation: wire these rules into the redaction middleware
+# (src/{{ project_slug }}/config/redaction.py or equivalent).
+
+version: "1.0"
+
+settings:
+  case_sensitive: false
+  max_input_length: 100000
+  on_match_action: replace
+
+rules:
+
+  - id: aws_access_key
+    description: "AWS Access Key ID (AKIA...)"
+    pattern: '\bAKIA[0-9A-Z]{16}\b'
+    replacement: "[REDACTED:AWS_KEY]"
+    contexts:
+      llm_input: true
+      logging: true
+    severity: critical
+
+  - id: aws_secret_key
+    description: "AWS Secret Access Key (40-char base64)"
+    pattern: '(?<![A-Za-z0-9/+=])[A-Za-z0-9/+=]{40}(?![A-Za-z0-9/+=])'
+    replacement: "[REDACTED:AWS_SECRET]"
+    contexts:
+      llm_input: true
+      logging: true
+    severity: critical
+    notes: "High false-positive rate — pair with proximity check for 'aws_secret' or 'SecretAccessKey' keywords"
+
+  - id: generic_api_key
+    description: "Generic API key patterns (key=..., api_key=..., apikey=...)"
+    pattern: '(?i)(?:api[_-]?key|secret[_-]?key|access[_-]?token)\s*[=:]\s*["\x27]?([A-Za-z0-9_\-]{20,})["\x27]?'
+    replacement: "[REDACTED:API_KEY]"
+    contexts:
+      llm_input: true
+      logging: true
+    severity: high
+
+  - id: email_address
+    description: "Email addresses (RFC 5322 simplified)"
+    pattern: '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    replacement: "[REDACTED:EMAIL]"
+    contexts:
+      llm_input: true
+      logging: true
+    severity: medium
+
+  - id: us_phone_number
+    description: "US phone numbers (various formats)"
+    pattern: '(?<!\d)(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}(?!\d)'
+    replacement: "[REDACTED:PHONE]"
+    contexts:
+      llm_input: true
+      logging: true
+    severity: medium
+
+  - id: ssn
+    description: "US Social Security Numbers (XXX-XX-XXXX)"
+    pattern: '\b\d{3}-\d{2}-\d{4}\b'
+    replacement: "[REDACTED:SSN]"
+    contexts:
+      llm_input: true
+      logging: true
+    severity: critical
+
+  - id: credit_card
+    description: "Credit card numbers (13-19 digits, optional separators)"
+    pattern: '\b(?:\d[ -]*?){13,19}\b'
+    replacement: "[REDACTED:CC]"
+    contexts:
+      llm_input: true
+      logging: true
+    severity: critical
+    notes: "Luhn validation recommended as a post-regex filter to reduce false positives"
+
+  - id: jwt_token
+    description: "JSON Web Tokens (three base64url segments)"
+    pattern: '\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b'
+    replacement: "[REDACTED:JWT]"
+    contexts:
+      llm_input: true
+      logging: true
+    severity: high
+
+  - id: connection_string
+    description: "Database connection strings (postgres://, mysql://, mongodb://, redis://)"
+    pattern: '(?i)(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis|amqp)://[^\s"''<>]+'
+    replacement: "[REDACTED:CONN_STRING]"
+    contexts:
+      llm_input: true
+      logging: true
+    severity: critical
+
+  - id: bearer_token
+    description: "Authorization Bearer tokens"
+    pattern: '(?i)bearer\s+[A-Za-z0-9_\-\.]+(?:\.[A-Za-z0-9_\-\.]+)*'
+    replacement: "[REDACTED:BEARER]"
+    contexts:
+      llm_input: true
+      logging: true
+    severity: high
+
+  - id: private_key
+    description: "PEM-encoded private keys"
+    pattern: '-----BEGIN (?:RSA |EC |DSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |DSA )?PRIVATE KEY-----'
+    replacement: "[REDACTED:PRIVATE_KEY]"
+    contexts:
+      llm_input: true
+      logging: true
+    severity: critical
+
+  - id: ipv4_address
+    description: "IPv4 addresses (non-public ranges still redacted in logs)"
+    pattern: '\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b'
+    replacement: "[REDACTED:IP]"
+    contexts:
+      llm_input: false
+      logging: true
+    severity: low
+    notes: "Redacted in logs only — IP addresses in LLM context are rarely PII-relevant"

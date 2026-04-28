@@ -1,0 +1,19 @@
+[project]
+name = "idi-platform-contracts"
+version = "0.1.0"
+description = "Shared Pydantic models and enums for the IDI platform contract layer"
+requires-python = ">=3.12"
+license = {text = "{{ license }}"}
+dependencies = [
+    "pydantic>=2.0",
+]
+
+[project.scripts]
+generate-ts-types = "scripts.generate_ts_types:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/idi_platform_contracts"]

@@ -1,0 +1,40 @@
+{
+  "name": "{{ project_slug }}-web",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Frontend for {{ project_name }}",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "generate-types": "cd ../../packages/contracts && python scripts/generate_ts_types.py --output ../../apps/web/src/types/generated"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@tanstack/react-query": "^5.62.0",
+    "aws-amplify": "^6.12.0",
+    "@aws-amplify/ui-react": "^6.7.0",
+    "@radix-ui/react-slot": "^1.1.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.6.0",
+    "wouter": "^3.5.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "jsdom": "^25.0.1",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.14",
+    "vitest": "^2.1.8",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/user-event": "^14.5.2"
+  }
+}

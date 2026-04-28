@@ -20,7 +20,7 @@
 #>
 
 param(
-    [ValidateSet("minimal", "ai-core", "full-stack", "e2e", "all")]
+    [ValidateSet("minimal", "ai-core", "postgres", "full-stack", "e2e", "all")]
     [string]$Preset = "all",
 
     [string]$OutputDir,
@@ -70,6 +70,29 @@ $Presets = @{
             "--data", "license=MIT",
             "--data", "claude_code_model=claude-opus-4-6",
             "--data", "metadata_store=dynamodb",
+            "--data", "llm_provider=bedrock",
+            "--data", "include_frontend=false",
+            "--data", "include_infra=false",
+            "--data", "include_observability=false",
+            "--data", "include_security=false",
+            "--data", "include_evals=true"
+        )
+        ExpectedPresent = @("evals")
+        ExpectedAbsent  = @("apps", "infra", "observability", "security", ".cursor/rules/frontend.mdc")
+    }
+    "postgres" = @{
+        Slug = "test_postgres"
+        Data = @(
+            "--data", "project_name=TestPostgres",
+            "--data", "project_slug=test_postgres",
+            "--data", "project_description=Postgres preset validation",
+            "--data", "github_org=test-org",
+            "--data", "github_team_slug=core-team",
+            "--data", "aws_region=us-east-1",
+            "--data", "python_version=3.12",
+            "--data", "license=MIT",
+            "--data", "claude_code_model=claude-opus-4-6",
+            "--data", "metadata_store=postgres",
             "--data", "llm_provider=bedrock",
             "--data", "include_frontend=false",
             "--data", "include_infra=false",
@@ -143,7 +166,7 @@ $Presets = @{
 # ── Determine which presets to run ───────────────────────────────────────────
 
 $PresetsToRun = if ($Preset -eq "all") {
-    @("minimal", "ai-core", "full-stack", "e2e")
+    @("minimal", "ai-core", "postgres", "full-stack", "e2e")
 } else {
     @($Preset)
 }
