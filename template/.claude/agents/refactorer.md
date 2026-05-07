@@ -2,7 +2,7 @@
 name: refactorer
 description: Improves code structure without changing behavior using the Mikado method. Use for safe refactoring of modules, interfaces, or patterns.
 tools: Read, Write, Edit, Bash, Glob, Grep
-model: claude-opus-4-6
+model: claude-opus-4-7
 ---
 
 # Refactorer Agent

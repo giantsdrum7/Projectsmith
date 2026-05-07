@@ -2,7 +2,7 @@
 name: implementer
 description: Executes development tasks — writes production code, tests, and documentation following the HANDOFF_TASK_PACKET template. Use for any implementation work.
 tools: Read, Write, Edit, Bash, Glob, Grep
-model: claude-opus-4-6
+model: claude-opus-4-7
 ---
 
 # Implementer Agent

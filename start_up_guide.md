@@ -317,7 +317,7 @@ CURSOR_RULES.md — thin index that references .cursor/rules/ modules and lists 
   - hooks[].matcher must be a regex string (e.g., `"Edit|Write"`) — not an object. Hooks receive JSON context via stdin; use a wrapper script to parse `tool_input.file_path`.
   - env block values must be strings (`"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"` to enable agent teams).
   - Add `"$schema": "https://json.schemastore.org/claude-code-settings.json"` to enable IDE validation.
-  - Set model to `claude-opus-4-6` for consistent agent reasoning quality.
+  - Set model to `claude-opus-4-7` for consistent agent reasoning quality.
 
 .claude/agents/* — baseline definitions for code reviewer, researcher, architect, test runner. Each agent file uses YAML frontmatter (name, description, tools, model) and specifies the agent's role, invocation trigger, and checklist. Valid tool names: `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `WebSearch`, `WebFetch` — do not use `Shell` (not a valid tool name).
 

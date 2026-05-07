@@ -20,7 +20,7 @@
 #>
 
 param(
-    [ValidateSet("minimal", "ai-core", "postgres", "full-stack", "e2e", "all")]
+    [ValidateSet("minimal", "ai-core", "postgres", "full-stack", "e2e", "long-slug", "all")]
     [string]$Preset = "all",
 
     [string]$OutputDir,
@@ -45,7 +45,7 @@ $Presets = @{
             "--data", "aws_region=us-east-1",
             "--data", "python_version=3.12",
             "--data", "license=MIT",
-            "--data", "claude_code_model=claude-opus-4-6",
+            "--data", "claude_code_model=claude-opus-4-7",
             "--data", "metadata_store=none",
             "--data", "llm_provider=none",
             "--data", "include_frontend=false",
@@ -68,7 +68,7 @@ $Presets = @{
             "--data", "aws_region=us-east-1",
             "--data", "python_version=3.12",
             "--data", "license=MIT",
-            "--data", "claude_code_model=claude-opus-4-6",
+            "--data", "claude_code_model=claude-opus-4-7",
             "--data", "metadata_store=dynamodb",
             "--data", "llm_provider=bedrock",
             "--data", "include_frontend=false",
@@ -91,7 +91,7 @@ $Presets = @{
             "--data", "aws_region=us-east-1",
             "--data", "python_version=3.12",
             "--data", "license=MIT",
-            "--data", "claude_code_model=claude-opus-4-6",
+            "--data", "claude_code_model=claude-opus-4-7",
             "--data", "metadata_store=postgres",
             "--data", "llm_provider=bedrock",
             "--data", "include_frontend=false",
@@ -114,7 +114,7 @@ $Presets = @{
             "--data", "aws_region=us-east-1",
             "--data", "python_version=3.12",
             "--data", "license=MIT",
-            "--data", "claude_code_model=claude-opus-4-6",
+            "--data", "claude_code_model=claude-opus-4-7",
             "--data", "metadata_store=dynamodb",
             "--data", "llm_provider=bedrock",
             "--data", "include_frontend=true",
@@ -138,7 +138,7 @@ $Presets = @{
             "--data", "aws_region=us-east-1",
             "--data", "python_version=3.12",
             "--data", "license=MIT",
-            "--data", "claude_code_model=claude-opus-4-6",
+            "--data", "claude_code_model=claude-opus-4-7",
             "--data", "metadata_store=none",
             "--data", "llm_provider=none",
             "--data", "include_frontend=true",
@@ -161,12 +161,39 @@ $Presets = @{
         )
         ExpectedAbsent  = @("infra", "observability", "security", "evals")
     }
+    # Regression net for E501 / long-slug overflow in scaffold-managed Python
+    # files (see CHANGELOG v1.0.0). Mirrors AI-core but with a 35-char slug.
+    "long-slug" = @{
+        Slug = "very_long_project_slug_for_testing"
+        Data = @(
+            "--data", "project_name=TestLongSlug",
+            "--data", "project_slug=very_long_project_slug_for_testing",
+            "--data", "project_description=Long-slug regression net (35-char slug)",
+            "--data", "github_org=test-org",
+            "--data", "github_team_slug=core-team",
+            "--data", "client_id=test",
+            "--data", "environment_tier=dev",
+            "--data", "aws_region=us-east-1",
+            "--data", "python_version=3.12",
+            "--data", "license=MIT",
+            "--data", "claude_code_model=claude-opus-4-7",
+            "--data", "metadata_store=dynamodb",
+            "--data", "llm_provider=bedrock",
+            "--data", "include_frontend=false",
+            "--data", "include_infra=false",
+            "--data", "include_observability=false",
+            "--data", "include_security=false",
+            "--data", "include_evals=true"
+        )
+        ExpectedPresent = @("evals")
+        ExpectedAbsent  = @("apps", "infra", "observability", "security", ".cursor/rules/frontend.mdc")
+    }
 }
 
 # ── Determine which presets to run ───────────────────────────────────────────
 
 $PresetsToRun = if ($Preset -eq "all") {
-    @("minimal", "ai-core", "postgres", "full-stack", "e2e")
+    @("minimal", "ai-core", "postgres", "full-stack", "e2e", "long-slug")
 } else {
     @($Preset)
 }
@@ -222,17 +249,22 @@ foreach ($presetName in $PresetsToRun) {
         continue
     }
 
-    # Find the generated project directory
-    $projectDir = Get-ChildItem -Path $presetOutputDir -Directory | Select-Object -First 1
-    if (-not $projectDir) {
-        Write-Host "    FAIL: No project directory found in $presetOutputDir" -ForegroundColor Red
+    # Post v1.0.0 collapse: scaffold files materialize DIRECTLY at $presetOutputDir
+    # (no extra <slug>/ layer). Project directory == output directory.
+    $projectPath = $presetOutputDir
+
+    # Regression guard: a child directory matching the project_slug would mean
+    # the v1.0.0-style double-nesting returned.
+    $nestedRegression = Join-Path $presetOutputDir $presetSlug
+    if (Test-Path $nestedRegression -PathType Container) {
+        Write-Host "    FAIL: Double-nesting detected: extra '$presetSlug/' directory at $presetOutputDir" -ForegroundColor Red
         $results["generation"] = "FAIL"
         $presetFailed = $true
         $AllResults[$presetName] = $results
         $AnyFailure = $true
         continue
     }
-    $projectPath = $projectDir.FullName
+
     $results["generation"] = "PASS"
     Write-Host "    PASS: Generated at $projectPath" -ForegroundColor Green
 
@@ -427,9 +459,9 @@ foreach ($presetName in $PresetsToRun) {
     $settingsPath = Join-Path $projectPath ".claude" "settings.json"
     if (Test-Path $settingsPath) {
         $settingsJson = Get-Content $settingsPath -Raw | ConvertFrom-Json
-        if ($settingsJson.model -eq "claude-opus-4-6") {
+        if ($settingsJson.model -eq "claude-opus-4-7") {
             $results["settings_model"] = "PASS"
-            Write-Host "    settings.json model: PASS (claude-opus-4-6)" -ForegroundColor Green
+            Write-Host "    settings.json model: PASS (claude-opus-4-7)" -ForegroundColor Green
         } else {
             $results["settings_model"] = "FAIL (got: $($settingsJson.model))"
             Write-Host "    settings.json model: FAIL (got: $($settingsJson.model))" -ForegroundColor Red

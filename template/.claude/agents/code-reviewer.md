@@ -2,7 +2,7 @@
 name: code-reviewer
 description: Reviews code changes for quality, security, and convention compliance. Use proactively after staged changes or when a PR review is requested.
 tools: Read, Grep, Glob, Bash
-model: claude-opus-4-6
+model: claude-opus-4-7
 ---
 
 # Code Reviewer Agent

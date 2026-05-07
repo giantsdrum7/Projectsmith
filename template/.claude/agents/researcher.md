@@ -2,7 +2,7 @@
 name: researcher
 description: Investigates codebases, APIs, and documentation to answer technical questions. Use when deep investigation is needed before implementation decisions.
 tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
-model: claude-opus-4-6
+model: claude-opus-4-7
 ---
 
 # Researcher Agent

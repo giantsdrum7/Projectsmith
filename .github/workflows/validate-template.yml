@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        preset: [minimal, ai-core, full-stack, e2e]
+        preset: [minimal, ai-core, full-stack, e2e, long-slug]
         include:
           - preset: minimal
             answers: |
@@ -45,7 +45,7 @@ jobs:
               aws_region=us-east-1
               python_version=3.12
               license=MIT
-              claude_code_model=claude-opus-4-6
+              claude_code_model=claude-opus-4-7
               metadata_store=none
               llm_provider=none
               include_frontend=false
@@ -67,7 +67,7 @@ jobs:
               aws_region=us-east-1
               python_version=3.12
               license=MIT
-              claude_code_model=claude-opus-4-6
+              claude_code_model=claude-opus-4-7
               metadata_store=dynamodb
               llm_provider=bedrock
               include_frontend=false
@@ -89,7 +89,7 @@ jobs:
               aws_region=us-east-1
               python_version=3.12
               license=MIT
-              claude_code_model=claude-opus-4-6
+              claude_code_model=claude-opus-4-7
               metadata_store=dynamodb
               llm_provider=bedrock
               include_frontend=true
@@ -112,7 +112,7 @@ jobs:
               aws_region=us-east-1
               python_version=3.12
               license=MIT
-              claude_code_model=claude-opus-4-6
+              claude_code_model=claude-opus-4-7
               metadata_store=none
               llm_provider=none
               include_frontend=true
@@ -123,6 +123,32 @@ jobs:
               include_e2e_tests=true
             expected_present: "apps/web/e2e apps/web/e2e/package.json apps/web/e2e/playwright.config.ts apps/web/e2e/tests/smoke.spec.ts .nvmrc .github/workflows/e2e.yml docs/testing-e2e.md scripts/e2e-install.ps1 scripts/e2e-test.ps1"
             expected_absent: "infra observability security evals"
+          # Regression net for E501 / long-slug overflow in scaffold-managed
+          # Python files (see CHANGELOG v1.0.0). Mirrors the AI-core config
+          # but uses a 35-char project_slug to prove emitted scaffold files
+          # stay within the 120-char line-length limit when the slug is long.
+          - preset: long-slug
+            answers: |
+              project_name=TestLongSlug
+              project_slug=very_long_project_slug_for_testing
+              project_description=Long-slug regression net (35-char slug)
+              github_org=test-org
+              github_team_slug=core-team
+              client_id=test
+              environment_tier=dev
+              aws_region=us-east-1
+              python_version=3.12
+              license=MIT
+              claude_code_model=claude-opus-4-7
+              metadata_store=dynamodb
+              llm_provider=bedrock
+              include_frontend=false
+              include_infra=false
+              include_observability=false
+              include_security=false
+              include_evals=true
+            expected_present: "evals"
+            expected_absent: "apps infra observability security .cursor/rules/frontend.mdc"
 
     steps:
       - uses: actions/checkout@v6
@@ -147,13 +173,19 @@ jobs:
 
           copier copy . "$OUTPUT_DIR" --defaults "${DATA_ARGS[@]}" --vcs-ref HEAD
 
-          # Find the generated project directory (first child dir)
-          PROJECT_DIR=$(find "$OUTPUT_DIR" -mindepth 1 -maxdepth 1 -type d | head -1)
-          if [ -z "$PROJECT_DIR" ]; then
-            echo "::error::No project directory found in $OUTPUT_DIR"
+          # Post v1.0.0 collapse: scaffold files materialize DIRECTLY at OUTPUT_DIR
+          # (no extra <slug>/ layer). PROJECT_DIR == OUTPUT_DIR.
+          PROJECT_DIR="$OUTPUT_DIR"
+
+          # Regression guard: a child directory matching the project_slug
+          # would mean the v1.0.0-style double-nesting returned.
+          PROJECT_SLUG=$(grep -E '^project_slug=' <<< "${{ matrix.answers }}" | head -1 | cut -d= -f2)
+          if [ -n "$PROJECT_SLUG" ] && [ -d "$OUTPUT_DIR/$PROJECT_SLUG" ]; then
+            echo "::error::Double-nesting detected: extra '$PROJECT_SLUG/' directory at $OUTPUT_DIR"
             ls -la "$OUTPUT_DIR"
             exit 1
           fi
+
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           echo "OUTPUT_DIR=$OUTPUT_DIR" >> "$GITHUB_ENV"
           echo "Generated project at: $PROJECT_DIR"
@@ -259,8 +291,8 @@ jobs:
       - name: Verify .claude/settings.json model
         run: |
           MODEL=$(python3 -c "import json; print(json.load(open('$PROJECT_DIR/.claude/settings.json'))['model'])")
-          if [ "$MODEL" != "claude-opus-4-6" ]; then
-            echo "::error::Expected model 'claude-opus-4-6', got '$MODEL'"
+          if [ "$MODEL" != "claude-opus-4-7" ]; then
+            echo "::error::Expected model 'claude-opus-4-7', got '$MODEL'"
             exit 1
           fi
           echo "Model resolved correctly: $MODEL"
@@ -287,3 +319,24 @@ jobs:
       - name: Run pytest
         working-directory: ${{ env.PROJECT_DIR }}
         run: uv run pytest tests/ -v
+
+  no-double-nest:
+    name: No double-nesting (regression net)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install Copier
+        run: uv tool install copier
+
+      - name: Run scripts/dev/test-no-double-nest.sh (short slug)
+        run: |
+          chmod +x scripts/dev/test-no-double-nest.sh
+          scripts/dev/test-no-double-nest.sh smoke_no_nest
+
+      - name: Run scripts/dev/test-no-double-nest.sh (35-char long slug)
+        run: scripts/dev/test-no-double-nest.sh very_long_project_slug_for_testing

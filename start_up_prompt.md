@@ -60,7 +60,7 @@ CURSOR_RULES.md — Thin adapter/index pointing to .cursor/rules/*.mdc modules a
 
   Required format details:
   - Set `"$schema": "https://json.schemastore.org/claude-code-settings.json"` for IDE validation.
-  - Set model to `claude-opus-4-6`.
+  - Set model to `claude-opus-4-7`.
   - permissions.allow/deny entries use `Bash(subcommand *)` pattern — e.g., `"Bash(git status *)"`, `"Bash(ruff check *)"`.
   - hooks[].matcher is a regex string (e.g., `"Edit|Write"`) — not an object `{"tools": [...]}`.
   - Hooks receive JSON on stdin; write a wrapper script to parse `tool_input.file_path` rather than using `$TOOL_INPUT_PATH` (not set by Claude Code).

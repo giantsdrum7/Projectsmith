@@ -102,7 +102,7 @@ Some capabilities exist only in the upstream product (template CI, authoring doc
 | `github_team_slug` | str | `"core-team"` | For CODEOWNERS |
 | `python_version` | str | `"3.12"` | Minimum Python version |
 | `license` | choice | `"MIT"` | MIT / Apache-2.0 / proprietary |
-| `claude_code_model` | str | `"claude-opus-4-6"` | Model in settings.json |
+| `claude_code_model` | str | `"claude-opus-4-7"` | Model in settings.json |
 
 **Provider choices:**
 
@@ -126,7 +126,7 @@ Some capabilities exist only in the upstream product (template CI, authoring doc
 
 ## 7. Template CI Contract
 
-Projectsmith's own CI validates four representative presets:
+Projectsmith's own CI validates five representative presets:
 
 | Preset | Config | What it proves |
 |---|---|---|
@@ -134,12 +134,19 @@ Projectsmith's own CI validates four representative presets:
 | **AI-core** | llm_provider=bedrock, include_evals=true, metadata_store=dynamodb | Typical AI project works end-to-end |
 | **Full-stack** | All non-e2e modules on: frontend + infra + observability + security + evals | Maximum complexity still passes (e2e intentionally off to keep full-stack independent) |
 | **E2E** | include_frontend=true + include_e2e_tests=true | Playwright scaffold generates correctly; files appear where expected, e2e/frontend dependency enforced |
+| **Long-slug** | AI-core configuration with `project_slug=very_long_project_slug_for_testing` (35 chars) | Validates that emitted projects with long slugs (≥ 25 chars) do not violate the 120-char line-length limit in scaffold-managed Python files |
 
 For each preset, CI runs:
 1. `copier copy` with preset answers
 2. `uv venv && uv lock && uv sync --dev`
 3. `ruff check && ruff format --check && mypy`
 4. `pytest` (contract tests)
+
+A separate `no-double-nest` job in the same workflow runs
+`scripts/dev/test-no-double-nest.sh` with both a short and a 35-char slug
+to lock in the v1.0.0 fix that flattened `template/{{project_slug}}/` into
+`template/`. It fails if the rendered output ever regains the redundant
+extra `<slug>/` layer at the destination root.
 
 ## 8. Lesson Promotion Workflow (Downstream → Upstream)
 
@@ -154,7 +161,7 @@ For each preset, CI runs:
 
 ## 9. Versioning and Update Policy
 
-- Projectsmith uses tagged releases (semver-ish: `v1.0.0`, `v1.1.0`, etc.)
+- Projectsmith uses tagged releases (semver-ish: `v0.1.0`, `v1.0.0`, etc.)
 - Downstream projects pin to a release and update deliberately via `copier update`
 - Scaffold-managed files are safe to accept automatically
 - Merge-managed files require human review of the diff

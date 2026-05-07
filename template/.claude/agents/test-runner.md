@@ -2,7 +2,7 @@
 name: test-runner
 description: Runs test suites, analyzes failures, and reports coverage. Use when test analysis is needed or after verify-fast failures.
 tools: Read, Bash, Grep
-model: claude-opus-4-6
+model: claude-opus-4-7
 ---
 
 # Test Runner Agent
