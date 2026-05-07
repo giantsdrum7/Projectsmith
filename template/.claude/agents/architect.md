@@ -2,7 +2,7 @@
 name: architect
 description: Designs system architecture, evaluates trade-offs, and creates technical plans. Use for architectural decisions or planning large features spanning multiple modules.
 tools: Read, Grep, Glob, Bash
-model: claude-opus-4-6
+model: claude-opus-4-7
 ---
 
 # Architect Agent

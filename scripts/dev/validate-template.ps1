@@ -45,7 +45,7 @@ $Presets = @{
             "--data", "aws_region=us-east-1",
             "--data", "python_version=3.12",
             "--data", "license=MIT",
-            "--data", "claude_code_model=claude-opus-4-6",
+            "--data", "claude_code_model=claude-opus-4-7",
             "--data", "metadata_store=none",
             "--data", "llm_provider=none",
             "--data", "include_frontend=false",
@@ -68,7 +68,7 @@ $Presets = @{
             "--data", "aws_region=us-east-1",
             "--data", "python_version=3.12",
             "--data", "license=MIT",
-            "--data", "claude_code_model=claude-opus-4-6",
+            "--data", "claude_code_model=claude-opus-4-7",
             "--data", "metadata_store=dynamodb",
             "--data", "llm_provider=bedrock",
             "--data", "include_frontend=false",
@@ -91,7 +91,7 @@ $Presets = @{
             "--data", "aws_region=us-east-1",
             "--data", "python_version=3.12",
             "--data", "license=MIT",
-            "--data", "claude_code_model=claude-opus-4-6",
+            "--data", "claude_code_model=claude-opus-4-7",
             "--data", "metadata_store=postgres",
             "--data", "llm_provider=bedrock",
             "--data", "include_frontend=false",
@@ -114,7 +114,7 @@ $Presets = @{
             "--data", "aws_region=us-east-1",
             "--data", "python_version=3.12",
             "--data", "license=MIT",
-            "--data", "claude_code_model=claude-opus-4-6",
+            "--data", "claude_code_model=claude-opus-4-7",
             "--data", "metadata_store=dynamodb",
             "--data", "llm_provider=bedrock",
             "--data", "include_frontend=true",
@@ -138,7 +138,7 @@ $Presets = @{
             "--data", "aws_region=us-east-1",
             "--data", "python_version=3.12",
             "--data", "license=MIT",
-            "--data", "claude_code_model=claude-opus-4-6",
+            "--data", "claude_code_model=claude-opus-4-7",
             "--data", "metadata_store=none",
             "--data", "llm_provider=none",
             "--data", "include_frontend=true",
@@ -176,7 +176,7 @@ $Presets = @{
             "--data", "aws_region=us-east-1",
             "--data", "python_version=3.12",
             "--data", "license=MIT",
-            "--data", "claude_code_model=claude-opus-4-6",
+            "--data", "claude_code_model=claude-opus-4-7",
             "--data", "metadata_store=dynamodb",
             "--data", "llm_provider=bedrock",
             "--data", "include_frontend=false",
@@ -459,9 +459,9 @@ foreach ($presetName in $PresetsToRun) {
     $settingsPath = Join-Path $projectPath ".claude" "settings.json"
     if (Test-Path $settingsPath) {
         $settingsJson = Get-Content $settingsPath -Raw | ConvertFrom-Json
-        if ($settingsJson.model -eq "claude-opus-4-6") {
+        if ($settingsJson.model -eq "claude-opus-4-7") {
             $results["settings_model"] = "PASS"
-            Write-Host "    settings.json model: PASS (claude-opus-4-6)" -ForegroundColor Green
+            Write-Host "    settings.json model: PASS (claude-opus-4-7)" -ForegroundColor Green
         } else {
             $results["settings_model"] = "FAIL (got: $($settingsJson.model))"
             Write-Host "    settings.json model: FAIL (got: $($settingsJson.model))" -ForegroundColor Red

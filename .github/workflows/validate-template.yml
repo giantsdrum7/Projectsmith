@@ -45,7 +45,7 @@ jobs:
               aws_region=us-east-1
               python_version=3.12
               license=MIT
-              claude_code_model=claude-opus-4-6
+              claude_code_model=claude-opus-4-7
               metadata_store=none
               llm_provider=none
               include_frontend=false
@@ -67,7 +67,7 @@ jobs:
               aws_region=us-east-1
               python_version=3.12
               license=MIT
-              claude_code_model=claude-opus-4-6
+              claude_code_model=claude-opus-4-7
               metadata_store=dynamodb
               llm_provider=bedrock
               include_frontend=false
@@ -89,7 +89,7 @@ jobs:
               aws_region=us-east-1
               python_version=3.12
               license=MIT
-              claude_code_model=claude-opus-4-6
+              claude_code_model=claude-opus-4-7
               metadata_store=dynamodb
               llm_provider=bedrock
               include_frontend=true
@@ -112,7 +112,7 @@ jobs:
               aws_region=us-east-1
               python_version=3.12
               license=MIT
-              claude_code_model=claude-opus-4-6
+              claude_code_model=claude-opus-4-7
               metadata_store=none
               llm_provider=none
               include_frontend=true
@@ -139,7 +139,7 @@ jobs:
               aws_region=us-east-1
               python_version=3.12
               license=MIT
-              claude_code_model=claude-opus-4-6
+              claude_code_model=claude-opus-4-7
               metadata_store=dynamodb
               llm_provider=bedrock
               include_frontend=false
@@ -291,8 +291,8 @@ jobs:
       - name: Verify .claude/settings.json model
         run: |
           MODEL=$(python3 -c "import json; print(json.load(open('$PROJECT_DIR/.claude/settings.json'))['model'])")
-          if [ "$MODEL" != "claude-opus-4-6" ]; then
-            echo "::error::Expected model 'claude-opus-4-6', got '$MODEL'"
+          if [ "$MODEL" != "claude-opus-4-7" ]; then
+            echo "::error::Expected model 'claude-opus-4-7', got '$MODEL'"
             exit 1
           fi
           echo "Model resolved correctly: $MODEL"

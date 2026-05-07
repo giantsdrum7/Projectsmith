@@ -85,7 +85,7 @@ license:
 claude_code_model:
   type: str
   help: "Claude Code model ID for .claude/settings.json"
-  default: "claude-opus-4-6"
+  default: "claude-opus-4-7"
 
 metadata_store:
   type: str

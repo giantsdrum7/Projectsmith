@@ -102,7 +102,7 @@ Some capabilities exist only in the upstream product (template CI, authoring doc
 | `github_team_slug` | str | `"core-team"` | For CODEOWNERS |
 | `python_version` | str | `"3.12"` | Minimum Python version |
 | `license` | choice | `"MIT"` | MIT / Apache-2.0 / proprietary |
-| `claude_code_model` | str | `"claude-opus-4-6"` | Model in settings.json |
+| `claude_code_model` | str | `"claude-opus-4-7"` | Model in settings.json |
 
 **Provider choices:**
 
