@@ -2,6 +2,23 @@
 
 All notable changes to Projectsmith will be documented in this file.
 
+## v1.1.0 — 2026-05-07
+
+### Fixed
+
+- Collapsed the redundant outer `template/{{project_slug}}/` layer; emitted projects are now single-level instead of double-nested (`<project>/<project>/<files>` → `<project>/<files>`).
+- Wrapped every multi-mode `defaults` dict in `template/.../config/env_spec.py` to prevent ruff E501 line-length violations when `project_slug` is long enough to push a single-line literal past 120 chars after substitution.
+
+### Added
+
+- `Long-slug` template-CI preset (35-char `project_slug`, AI-core configuration) — locks in the regression net so future single-line dict literals cannot silently break long-slug projects.
+- `scripts/dev/test-no-double-nest.ps1` and `.sh` — copier smoke that asserts rendered output never reintroduces the double-nesting layer; wired into `validate-template.yml` as a dedicated `no-double-nest` job.
+- `docs/migration/v1.0-to-v1.1.md` — flatten-an-existing-project guide for downstream projects bootstrapped from the nested layout.
+
+### Breaking
+
+- Downstream projects generated from earlier versions have the nested `<project>/<project>/<files>` structure on disk. Running `copier update --vcs-ref=v1.1.0` against such a repo will not auto-collapse the layout. Downstream users must manually flatten per `docs/migration/v1.0-to-v1.1.md` before (or after) updating; otherwise a second `<project_slug>/` directory will appear inside the existing one.
+
 ## [Unreleased]
 
 ### Changed
