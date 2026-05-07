@@ -9,8 +9,10 @@ store entry that contains the full configuration.
 
 from __future__ import annotations
 
+from typing import Any
 
-def get_secret(secret_id: str, *, region: str | None = None) -> dict:
+
+def get_secret(secret_id: str, *, region: str | None = None) -> dict[str, Any]:
     """Retrieve and parse a JSON secret by ID.
 
     Args:
@@ -18,7 +20,7 @@ def get_secret(secret_id: str, *, region: str | None = None) -> dict:
         region: AWS region override. Defaults to env config.
 
     Returns:
-        Parsed JSON secret as a dictionary.
+        Parsed JSON secret as ``dict[str, Any]``.
 
     Raises:
         NotImplementedError: Until provider-specific implementation is added.
