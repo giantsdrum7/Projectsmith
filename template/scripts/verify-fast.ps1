@@ -58,7 +58,12 @@ try {
 # Step 3: Type check
 Write-Host "[3/3] Running mypy..." -ForegroundColor Yellow
 try {
-    $mypyOutput = & uv run mypy $LintTargets 2>&1
+    # NOTE: invoke mypy via `python -m mypy` rather than `uv run mypy` so that
+    # uv's script-path canonicalization (which corrupts the mypy console-script
+    # entry point on Windows under uv >= 0.7.20) is bypassed. Behaviour is
+    # equivalent: still runs inside the uv-managed venv, just dispatched
+    # through the interpreter instead of the Scripts/ stub.
+    $mypyOutput = & uv run python -m mypy $LintTargets 2>&1
     if ($LASTEXITCODE -ne 0) {
         $failures += "MYPY: $mypyOutput"
         Write-Host "  FAIL" -ForegroundColor Red
