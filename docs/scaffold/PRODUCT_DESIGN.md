@@ -144,7 +144,7 @@ For each preset, CI runs:
 
 A separate `no-double-nest` job in the same workflow runs
 `scripts/dev/test-no-double-nest.sh` with both a short and a 35-char slug
-to lock in the v1.1.0 fix that flattened `template/{{project_slug}}/` into
+to lock in the v1.0.0 fix that flattened `template/{{project_slug}}/` into
 `template/`. It fails if the rendered output ever regains the redundant
 extra `<slug>/` layer at the destination root.
 
@@ -161,7 +161,7 @@ extra `<slug>/` layer at the destination root.
 
 ## 9. Versioning and Update Policy
 
-- Projectsmith uses tagged releases (semver-ish: `v1.0.0`, `v1.1.0`, etc.)
+- Projectsmith uses tagged releases (semver-ish: `v0.1.0`, `v1.0.0`, etc.)
 - Downstream projects pin to a release and update deliberately via `copier update`
 - Scaffold-managed files are safe to accept automatically
 - Merge-managed files require human review of the diff

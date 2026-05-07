@@ -124,7 +124,7 @@ jobs:
             expected_present: "apps/web/e2e apps/web/e2e/package.json apps/web/e2e/playwright.config.ts apps/web/e2e/tests/smoke.spec.ts .nvmrc .github/workflows/e2e.yml docs/testing-e2e.md scripts/e2e-install.ps1 scripts/e2e-test.ps1"
             expected_absent: "infra observability security evals"
           # Regression net for E501 / long-slug overflow in scaffold-managed
-          # Python files (see CHANGELOG v1.1.0). Mirrors the AI-core config
+          # Python files (see CHANGELOG v1.0.0). Mirrors the AI-core config
           # but uses a 35-char project_slug to prove emitted scaffold files
           # stay within the 120-char line-length limit when the slug is long.
           - preset: long-slug
@@ -173,7 +173,7 @@ jobs:
 
           copier copy . "$OUTPUT_DIR" --defaults "${DATA_ARGS[@]}" --vcs-ref HEAD
 
-          # Post v1.1.0 collapse: scaffold files materialize DIRECTLY at OUTPUT_DIR
+          # Post v1.0.0 collapse: scaffold files materialize DIRECTLY at OUTPUT_DIR
           # (no extra <slug>/ layer). PROJECT_DIR == OUTPUT_DIR.
           PROJECT_DIR="$OUTPUT_DIR"
 

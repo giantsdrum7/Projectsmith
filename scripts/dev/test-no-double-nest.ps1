@@ -9,7 +9,7 @@
     appear DIRECTLY at the destination root — not inside an extra
     project_slug-named subdirectory.
 
-    Locks in the v1.1.0 collapse fix where template/{{project_slug}}/ was
+    Locks in the v1.0.0 collapse fix where template/{{project_slug}}/ was
     flattened into template/ to eliminate emitted-project double-nesting.
 
 .PARAMETER Slug
@@ -59,7 +59,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Sentinel files expected DIRECTLY at the destination root after the v1.1.0 collapse.
+# Sentinel files expected DIRECTLY at the destination root after the v1.0.0 collapse.
 $sentinels = @(
     "AGENTS.md",
     "CLAUDE.md",

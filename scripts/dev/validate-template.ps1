@@ -162,7 +162,7 @@ $Presets = @{
         ExpectedAbsent  = @("infra", "observability", "security", "evals")
     }
     # Regression net for E501 / long-slug overflow in scaffold-managed Python
-    # files (see CHANGELOG v1.1.0). Mirrors AI-core but with a 35-char slug.
+    # files (see CHANGELOG v1.0.0). Mirrors AI-core but with a 35-char slug.
     "long-slug" = @{
         Slug = "very_long_project_slug_for_testing"
         Data = @(
@@ -249,7 +249,7 @@ foreach ($presetName in $PresetsToRun) {
         continue
     }
 
-    # Post v1.1.0 collapse: scaffold files materialize DIRECTLY at $presetOutputDir
+    # Post v1.0.0 collapse: scaffold files materialize DIRECTLY at $presetOutputDir
     # (no extra <slug>/ layer). Project directory == output directory.
     $projectPath = $presetOutputDir
 

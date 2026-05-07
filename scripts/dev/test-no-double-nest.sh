@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Regression test: assert Projectsmith renders single-level (no double-nesting).
 #
-# Locks in the v1.1.0 collapse fix where template/{{project_slug}}/ was
+# Locks in the v1.0.0 collapse fix where template/{{project_slug}}/ was
 # flattened into template/ to eliminate emitted-project double-nesting.
 #
 # Usage:
@@ -49,7 +49,7 @@ if ! copier copy "$REPO_ROOT" "$TEMP_BASE" \
     exit 1
 fi
 
-# Sentinel files expected DIRECTLY at the destination root after the v1.1.0 collapse.
+# Sentinel files expected DIRECTLY at the destination root after the v1.0.0 collapse.
 SENTINELS=(
     "AGENTS.md"
     "CLAUDE.md"
